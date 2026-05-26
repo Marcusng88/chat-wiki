@@ -5,9 +5,75 @@ import { useAppStore } from '@/store/useAppStore'
 import LeftPanel from './LeftPanel'
 import ChatPanel from './ChatPanel'
 import ThemeToggle from './ThemeToggle'
+import { Menu, Eye, LogOut } from './Icons'
+
+// ── Resizer ──────────────────────────────────────────────────────────────────
+
+function Resizer() {
+  const [dragging, setDragging] = useState(false)
+
+  useEffect(() => {
+    const saved = parseInt(localStorage.getItem('cw:left-w') || '', 10)
+    if (!isNaN(saved)) document.documentElement.style.setProperty('--left-w', saved + 'px')
+  }, [])
+
+  function onDown(e: React.MouseEvent | React.TouchEvent) {
+    e.preventDefault()
+    setDragging(true)
+    document.body.classList.add('resizing')
+    const shellInner = document.querySelector('.shell-inner') as HTMLElement
+    if (!shellInner) return
+    const rect = shellInner.getBoundingClientRect()
+
+    function move(ev: MouseEvent | TouchEvent) {
+      const clientX =
+        'clientX' in ev ? ev.clientX : (ev as TouchEvent).touches[0]?.clientX ?? 0
+      const x = clientX - rect.left
+      const min = 280
+      const max = Math.max(min + 1, rect.width - 320 - 8)
+      const w = Math.min(max, Math.max(min, x))
+      document.documentElement.style.setProperty('--left-w', w + 'px')
+    }
+    function up() {
+      setDragging(false)
+      document.body.classList.remove('resizing')
+      window.removeEventListener('mousemove', move)
+      window.removeEventListener('mouseup', up)
+      window.removeEventListener('touchmove', move)
+      window.removeEventListener('touchend', up)
+      const w = getComputedStyle(document.documentElement).getPropertyValue('--left-w').trim()
+      const px = parseInt(w, 10)
+      if (!isNaN(px)) localStorage.setItem('cw:left-w', String(px))
+    }
+    window.addEventListener('mousemove', move)
+    window.addEventListener('mouseup', up)
+    window.addEventListener('touchmove', move, { passive: false })
+    window.addEventListener('touchend', up)
+  }
+
+  function onDoubleClick() {
+    document.documentElement.style.setProperty('--left-w', '520px')
+    localStorage.setItem('cw:left-w', '520')
+  }
+
+  return (
+    <div
+      className={`resizer${dragging ? ' dragging' : ''}`}
+      onMouseDown={onDown}
+      onTouchStart={onDown}
+      onDoubleClick={onDoubleClick}
+      role="separator"
+      aria-orientation="vertical"
+      aria-label="Resize sources panel — double-click to reset"
+      title="Drag to resize · double-click to reset"
+    />
+  )
+}
+
+// ── AppHeader ─────────────────────────────────────────────────────────────────
 
 function AppHeader() {
-  const { setMobileDrawerOpen: setIsMobileDrawerOpen } = useAppStore()
+  const { setMobileDrawerOpen } = useAppStore()
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -21,184 +87,57 @@ function AppHeader() {
   }, [menuOpen])
 
   return (
-    <header
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        height: 'var(--header-h)',
-        background: 'var(--header-bg)',
-        borderBottom: '1px solid var(--panel-border)',
-        display: 'flex',
-        alignItems: 'center',
-        padding: '0 24px',
-        zIndex: 50,
-        gap: 12,
-      }}
-    >
-      {/* hamburger (mobile) */}
+    <header className="app-header">
       <button
-        aria-label="Open menu"
-        onClick={() => setIsMobileDrawerOpen(true)}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'transparent',
-          border: 'none',
-          color: 'var(--text-muted)',
-          cursor: 'pointer',
-          padding: 4,
-          borderRadius: 6,
-        }}
-        className="md:hidden"
-        onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--text-primary)')}
-        onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--text-muted)')}
+        className="icon-btn hamburger"
+        onClick={() => setMobileDrawerOpen(true)}
+        aria-label="Open sources"
       >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <line x1="3" y1="6" x2="21" y2="6"/>
-          <line x1="3" y1="12" x2="21" y2="12"/>
-          <line x1="3" y1="18" x2="21" y2="18"/>
-        </svg>
+        <Menu />
       </button>
 
-      {/* brand */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-        <div
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontWeight: 700,
-            fontSize: 15,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            color: 'var(--text-primary)',
-          }}
-        >
-          <span
-            style={{
-              width: 7,
-              height: 7,
-              background: 'var(--accent)',
-              borderRadius: 2,
-              boxShadow: '0 0 10px var(--accent)',
-              flexShrink: 0,
-            }}
-          />
-          CHAT<span style={{ color: 'var(--accent)' }}>·</span>WIKI
+      <div className="brand-block">
+        <div className="brand">
+          <span className="dot" />
+          <span className="name">
+            CHAT<em>·</em>WIKI
+          </span>
         </div>
-        <div
-          style={{
-            fontSize: 10,
-            color: 'var(--text-secondary)',
-            fontStyle: 'italic',
-            paddingLeft: 15,
-            opacity: 0.8,
-          }}
-        >
-          ask anything — answers come from the files you&apos;ve added.
-        </div>
+        <div className="tagline">ask anything — answers come from the files you&apos;ve added.</div>
       </div>
 
-      <div style={{ flex: 1 }} />
+      <div className="spacer" />
 
-      {/* header actions */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div className="header-actions">
         <ThemeToggle />
 
-        {/* account menu */}
-        <div style={{ position: 'relative' }} ref={menuRef}>
+        <div className="account-wrap" ref={menuRef}>
           <button
+            className={`account-btn${menuOpen ? ' open' : ''}`}
             onClick={() => setMenuOpen((v) => !v)}
             aria-label="Account"
             title="Account"
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: '50%',
-              background: 'var(--accent-dim)',
-              border: '1px solid var(--accent-ring)',
-              color: 'var(--accent)',
-              fontFamily: 'var(--font-mono)',
-              fontSize: 11,
-              fontWeight: 500,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              letterSpacing: '0.02em',
-            }}
           >
-            YK
+            <span className="avatar">YK</span>
           </button>
 
           {menuOpen && (
-            <div
-              role="menu"
-              style={{
-                position: 'absolute',
-                right: 0,
-                top: 40,
-                minWidth: 180,
-                background: 'var(--panel-bg)',
-                border: '1px solid var(--panel-border-strong)',
-                borderRadius: 10,
-                boxShadow: 'var(--panel-shadow)',
-                overflow: 'hidden',
-                zIndex: 100,
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div
-                style={{
-                  padding: '10px 12px 8px',
-                  borderBottom: '1px solid var(--panel-border)',
-                }}
-              >
-                <div style={{ fontSize: 12, color: 'var(--text-primary)', fontWeight: 500 }}>You</div>
-                <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>you@example.com</div>
+            <div className="account-menu" onClick={(e) => e.stopPropagation()}>
+              <div className="account-info">
+                <div className="account-name">You</div>
+                <div className="account-email">you@example.com</div>
               </div>
-              <button
-                role="menuitem"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  width: '100%',
-                  padding: '8px 12px',
-                  background: 'transparent',
-                  border: 'none',
-                  color: 'var(--text-secondary)',
-                  fontSize: 11,
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                }}
-                onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = 'var(--surface-soft)')}
-                onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = 'transparent')}
-              >
-                Account settings
+              <div className="row-menu-sep" />
+              <button className="account-item">
+                <Eye />
+                <span>Account settings</span>
               </button>
               <button
-                role="menuitem"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  width: '100%',
-                  padding: '8px 12px',
-                  background: 'transparent',
-                  border: 'none',
-                  color: 'var(--status-failed)',
-                  fontSize: 11,
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                }}
-                onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = 'var(--surface-soft)')}
-                onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = 'transparent')}
+                className="account-item danger"
                 onClick={() => setMenuOpen(false)}
               >
-                Sign out
+                <LogOut />
+                <span>Sign out</span>
               </button>
             </div>
           )}
@@ -208,55 +147,57 @@ function AppHeader() {
   )
 }
 
+// ── TwoPanelShell ─────────────────────────────────────────────────────────────
+
 export default function TwoPanelShell() {
-  const { isMobileDrawerOpen, setMobileDrawerOpen: setIsMobileDrawerOpen } = useAppStore()
+  const { isMobileDrawerOpen, setMobileDrawerOpen, leftCollapsed, setLeftCollapsed } =
+    useAppStore()
+
+  // Restore collapse state from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('cw:left-collapsed')
+      if (saved === '1') setLeftCollapsed(true)
+    } catch {}
+  }, [setLeftCollapsed])
+
+  // Persist collapse state
+  useEffect(() => {
+    try {
+      localStorage.setItem('cw:left-collapsed', leftCollapsed ? '1' : '0')
+    } catch {}
+  }, [leftCollapsed])
 
   return (
-    <div className="flex h-full overflow-hidden" style={{ flexDirection: 'column' }}>
+    <>
       <AppHeader />
 
-      {/* content below fixed header */}
-      <div
-        className="flex overflow-hidden"
-        style={{ flex: 1, marginTop: 'var(--header-h)' }}
-      >
-        <aside
-          data-testid="left-panel"
-          className="hidden md:flex shrink-0 flex-col"
-          style={{
-            width: 280,
-            borderRight: '1px solid var(--panel-border)',
-            background: 'var(--panel-bg)',
-          }}
-        >
-          <LeftPanel />
-        </aside>
+      <div className="shell">
+        <div className={`shell-inner${leftCollapsed ? ' left-collapsed' : ''}`}>
+          <aside
+            data-testid="left-panel"
+            className={`panel left-panel${isMobileDrawerOpen ? ' open' : ''}`}
+          >
+            <LeftPanel />
+          </aside>
 
-        {isMobileDrawerOpen && (
-          <>
-            <div
-              className="fixed inset-0 z-40 md:hidden"
-              style={{ background: 'rgba(0,0,0,0.5)' }}
-              aria-label="Close drawer"
-              onClick={() => setIsMobileDrawerOpen(false)}
-            />
-            <aside
-              className="fixed inset-y-0 left-0 z-50 flex flex-col md:hidden"
-              style={{ width: 280, background: 'var(--panel-bg)', top: 'var(--header-h)' }}
-            >
-              <LeftPanel />
-            </aside>
-          </>
-        )}
+          <Resizer />
 
-        <main
-          data-testid="main-panel"
-          className="flex flex-1 flex-col overflow-hidden"
-          style={{ background: 'var(--page-bg)' }}
-        >
-          <ChatPanel />
-        </main>
+          <main
+            data-testid="main-panel"
+            className="panel chat-panel"
+          >
+            <ChatPanel />
+          </main>
+        </div>
       </div>
-    </div>
+
+      {isMobileDrawerOpen && (
+        <div
+          className="mobile-backdrop"
+          onClick={() => setMobileDrawerOpen(false)}
+        />
+      )}
+    </>
   )
 }
