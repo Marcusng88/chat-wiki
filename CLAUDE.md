@@ -9,6 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working in this
 - **Always** use `/caveman` mode for all communication.
 - Use `/grill-me` when planning features or reviewing designs before implementing.
 - Apply `/karpathy-guidelines` when writing or reviewing code.
+- Apply `/tdd` when implementing new features or fixing bugs.
 
 ---
 
