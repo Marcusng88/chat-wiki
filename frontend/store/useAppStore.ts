@@ -1,54 +1,41 @@
+'use client'
+
 import { create } from 'zustand'
-
-export type DocumentStatus = 'uploading' | 'processing' | 'ready' | 'failed' | 'conflict'
-
-export interface Document {
-  id: string
-  name: string
-  status: DocumentStatus
-  rawContent?: string
-  createdAt?: string
-}
-
-export interface Message {
-  id: string
-  type: 'user' | 'agent' | 'typing' | 'hitl' | 'a2ui'
-  content?: string
-  hasSources?: boolean
-  sources?: { documentId: string; fileName: string }[]
-}
+import type { Document, Message } from '@/lib/types'
 
 interface AppState {
   documents: Document[]
   messages: Message[]
-  activeConflicts: string[]
   threadId: string | null
+  leftCollapsed: boolean
   leftPanelView: 'list' | 'detail'
-  selectedDocumentId: string | null
+  selectedDocId: string | null
   isStreaming: boolean
   isMobileDrawerOpen: boolean
 }
 
 interface AppActions {
-  setDocuments: (docs: Document[]) => void
+  setDocuments: (docs: Document[] | ((prev: Document[]) => Document[])) => void
   addMessage: (msg: Message) => void
   updateMessage: (id: string, patch: Partial<Message>) => void
   clearMessages: (newThreadId: string) => void
-  setActiveConflicts: (ids: string[]) => void
   setThreadId: (id: string | null) => void
+  setLeftCollapsed: (value: boolean | ((prev: boolean) => boolean)) => void
   setLeftPanelView: (view: 'list' | 'detail') => void
-  setSelectedDocumentId: (id: string | null) => void
+  setSelectedDocId: (id: string | null) => void
   setIsStreaming: (value: boolean) => void
-  setIsMobileDrawerOpen: (value: boolean) => void
+  setMobileDrawerOpen: (value: boolean) => void
+  openDocument: (id: string) => void
+  backToList: () => void
 }
 
 const initialState: AppState = {
   documents: [],
   messages: [],
-  activeConflicts: [],
   threadId: null,
+  leftCollapsed: false,
   leftPanelView: 'list',
-  selectedDocumentId: null,
+  selectedDocId: null,
   isStreaming: false,
   isMobileDrawerOpen: false,
 }
@@ -56,31 +43,43 @@ const initialState: AppState = {
 export const useAppStore = create<AppState & AppActions>()((set) => ({
   ...initialState,
 
-  setDocuments: (docs) => set({ documents: docs }),
+  setDocuments: (docs) =>
+    set((s) => ({ documents: typeof docs === 'function' ? docs(s.documents) : docs })),
 
-  addMessage: (msg) => set((s) => ({ messages: [...s.messages, msg] })),
+  addMessage: (msg) =>
+    set((s) => ({ messages: [...s.messages, msg] })),
 
   updateMessage: (id, patch) =>
     set((s) => ({
-      messages: s.messages.map((m) => (m.id === id ? { ...m, ...patch } : m)),
+      messages: s.messages.map((m) => (m.id === id ? { ...m, ...patch } as Message : m)),
     })),
 
   clearMessages: (newThreadId) =>
     set({ messages: [], threadId: newThreadId }),
 
-  setActiveConflicts: (ids) => set({ activeConflicts: ids }),
-
   setThreadId: (id) => set({ threadId: id }),
+
+  setLeftCollapsed: (value) =>
+    set((s) => ({ leftCollapsed: typeof value === 'function' ? value(s.leftCollapsed) : value })),
 
   setLeftPanelView: (view) =>
     set((s) => ({
       leftPanelView: view,
-      selectedDocumentId: view === 'list' ? null : s.selectedDocumentId,
+      selectedDocId: view === 'list' ? null : s.selectedDocId,
     })),
 
-  setSelectedDocumentId: (id) => set({ selectedDocumentId: id }),
+  setSelectedDocId: (id) => set({ selectedDocId: id }),
 
   setIsStreaming: (value) => set({ isStreaming: value }),
 
-  setIsMobileDrawerOpen: (value) => set({ isMobileDrawerOpen: value }),
+  setMobileDrawerOpen: (value) => set({ isMobileDrawerOpen: value }),
+
+  openDocument: (id) =>
+    set({ leftPanelView: 'detail', selectedDocId: id, isMobileDrawerOpen: false }),
+
+  backToList: () =>
+    set({ leftPanelView: 'list', selectedDocId: null }),
 }))
+
+export const useActiveConflicts = () =>
+  useAppStore((s) => s.documents.filter((d) => d.hasConflict))

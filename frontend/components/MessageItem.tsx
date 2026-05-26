@@ -3,10 +3,10 @@
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
-import { Message } from '@/store/useAppStore'
+import type { Message } from '@/lib/types'
 
 export default function MessageItem({ msg }: { msg: Message }) {
-  if (msg.type === 'user') {
+  if (msg.role === 'user') {
     return (
       <div className="flex justify-end">
         <div
@@ -23,7 +23,7 @@ export default function MessageItem({ msg }: { msg: Message }) {
     )
   }
 
-  if (msg.type === 'agent') {
+  if (msg.role === 'agent') {
     return (
       <div className="flex justify-start gap-2">
         <div
@@ -87,14 +87,14 @@ export default function MessageItem({ msg }: { msg: Message }) {
               ),
             }}
           >
-            {msg.content ?? ''}
+            {msg.role === 'agent' ? (msg.md ?? '') : ''}
           </ReactMarkdown>
         </div>
       </div>
     )
   }
 
-  if (msg.type === 'typing') {
+  if (msg.role === 'typing') {
     return (
       <div data-testid="msg-typing" className="flex justify-start gap-2 items-center py-1">
         <div
@@ -122,7 +122,7 @@ export default function MessageItem({ msg }: { msg: Message }) {
     )
   }
 
-  if (msg.type === 'hitl') {
+  if (msg.role === 'hitl') {
     return (
       <div
         data-testid="msg-hitl"
@@ -137,24 +137,6 @@ export default function MessageItem({ msg }: { msg: Message }) {
         <span style={{ color: 'var(--color-status-processing)', fontWeight: 500 }}>
           HITL
         </span>
-        {' — Phase 2'}
-      </div>
-    )
-  }
-
-  if (msg.type === 'a2ui') {
-    return (
-      <div
-        data-testid="msg-a2ui"
-        className="rounded border-l-2 py-3 pl-4 pr-3 text-xs"
-        style={{
-          borderLeftColor: 'var(--accent)',
-          background: 'var(--surface)',
-          color: 'var(--fg-muted)',
-          fontFamily: 'var(--font-body)',
-        }}
-      >
-        <span style={{ color: 'var(--accent)', fontWeight: 500 }}>A2UI</span>
         {' — Phase 2'}
       </div>
     )

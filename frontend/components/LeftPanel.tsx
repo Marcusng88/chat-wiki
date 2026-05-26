@@ -5,7 +5,7 @@ import MaterialRow from './MaterialRow'
 import UploadZone from './UploadZone'
 
 export default function LeftPanel() {
-  const { documents, activeConflicts } = useAppStore()
+  const { documents } = useAppStore()
 
   return (
     <div className="flex h-full flex-col">
@@ -43,7 +43,7 @@ export default function LeftPanel() {
             <MaterialRow
               key={doc.id}
               doc={doc}
-              isConflicted={activeConflicts.includes(doc.id)}
+              isConflicted={doc.hasConflict}
             />
           ))
         )}

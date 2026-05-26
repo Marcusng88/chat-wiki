@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Document } from '@/store/useAppStore'
+import type { Document } from '@/lib/types'
 import { useAppStore } from '@/store/useAppStore'
 
 const EXT_ICONS: Record<string, string> = {
@@ -44,8 +44,7 @@ export default function MaterialRow({
   const badgeLabel = isConflicted ? 'conflict' : doc.status
 
   function handleDeleteConfirm() {
-    const { documents, setDocuments } = useAppStore.getState()
-    setDocuments(documents.filter((d) => d.id !== doc.id))
+    useAppStore.getState().setDocuments((docs) => docs.filter((d) => d.id !== doc.id))
     setConfirmOpen(false)
   }
 
@@ -69,15 +68,15 @@ export default function MaterialRow({
         className="shrink-0 text-xs"
         style={{ color: statusColor, fontFamily: 'monospace', lineHeight: 1 }}
       >
-        {fileIcon(doc.name)}
+        {fileIcon(doc.title)}
       </span>
 
       <span
         className="flex-1 truncate text-xs"
-        title={doc.name}
+        title={doc.title}
         style={{ color: 'var(--fg)', fontFamily: 'var(--font-body)', minWidth: 0 }}
       >
-        {doc.name}
+        {doc.title}
       </span>
 
       <span
@@ -89,7 +88,7 @@ export default function MaterialRow({
       </span>
 
       <button
-        aria-label={`Options for ${doc.name}`}
+        aria-label={`Options for ${doc.title}`}
         className="shrink-0 rounded px-1 opacity-0 transition-opacity group-hover:opacity-100"
         style={{ color: 'var(--fg-muted)', fontSize: '13px', lineHeight: 1 }}
         onClick={() => setMenuOpen((v) => !v)}
@@ -151,7 +150,7 @@ export default function MaterialRow({
               className="mb-4 truncate font-mono"
               style={{ color: 'var(--fg-muted)', fontSize: '11px' }}
             >
-              {doc.name}
+              {doc.title}
             </p>
             <div className="flex gap-2 justify-end">
               <button

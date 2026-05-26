@@ -5,7 +5,7 @@ import { useAppStore } from '@/store/useAppStore'
 import MessageItem from './MessageItem'
 
 export default function ChatPanel() {
-  const { messages, clearMessages, setIsMobileDrawerOpen } = useAppStore()
+  const { messages, clearMessages, setMobileDrawerOpen } = useAppStore()
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -27,7 +27,7 @@ export default function ChatPanel() {
         <button
           aria-label="Open menu"
           className="md:hidden flex items-center justify-center"
-          onClick={() => setIsMobileDrawerOpen(true)}
+          onClick={() => setMobileDrawerOpen(true)}
           style={{ color: 'var(--fg-muted)' }}
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
