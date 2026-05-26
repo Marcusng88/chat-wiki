@@ -176,7 +176,7 @@ export default function TwoPanelShell() {
         <div className={`shell-inner${leftCollapsed ? ' left-collapsed' : ''}`}>
           <aside
             data-testid="left-panel"
-            className={`panel left-panel${isMobileDrawerOpen ? ' open' : ''}`}
+            className={`panel left-panel${isMobileDrawerOpen ? ' open' : ''}${leftCollapsed ? ' collapsed' : ''}`}
           >
             <LeftPanel />
           </aside>

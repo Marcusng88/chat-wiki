@@ -1,52 +1,164 @@
 'use client'
 
-import { useAppStore } from '@/store/useAppStore'
+import { useCallback, useEffect } from 'react'
+import { useAppStore, useActiveConflicts } from '@/store/useAppStore'
+import type { Document, FileType, ProcessingStage } from '@/lib/types'
 import MaterialRow from './MaterialRow'
 import UploadZone from './UploadZone'
+import DetailView from './DetailView'
+import { ChevronLeft, ChevronRight, Sparkle } from './Icons'
+
+function toFileType(filename: string): FileType {
+  const ext = (filename.split('.').pop() ?? '').toLowerCase()
+  if (ext === 'pdf' || ext === 'md' || ext === 'txt' || ext === 'pptx') return ext
+  if (ext === 'png' || ext === 'jpg' || ext === 'jpeg' || ext === 'webp') return 'img'
+  return 'txt'
+}
 
 export default function LeftPanel() {
-  const { documents } = useAppStore()
+  const {
+    documents,
+    setDocuments,
+    leftPanelView,
+    selectedDocId,
+    openDocument,
+    backToList,
+    leftCollapsed,
+    setLeftCollapsed,
+  } = useAppStore()
+  const activeConflicts = useActiveConflicts()
+  const selectedDoc = documents.find((d) => d.id === selectedDocId)
+
+  // Animate processing / uploading progress in dev
+  useEffect(() => {
+    const t = setInterval(() => {
+      setDocuments((docs) => {
+        if (!docs.some((d) => d.status === 'processing' || d.status === 'uploading')) return docs
+        return docs.map((d): Document => {
+          if (d.status === 'processing' && typeof d.progress === 'number' && d.progress < 99) {
+            const next = Math.min(99, d.progress + Math.random() * 3)
+            const stage: ProcessingStage =
+              next > 30 && next < 60 ? 'chunking' : next < 80 ? 'generating_wiki' : 'indexing'
+            return { ...d, progress: next, stage }
+          }
+          if (d.status === 'uploading' && typeof d.progress === 'number') {
+            const next = d.progress + Math.random() * 8
+            if (next >= 100)
+              return { ...d, status: 'processing', progress: 5, stage: 'extracting' } as Document
+            return { ...d, progress: next }
+          }
+          return d
+        })
+      })
+    }, 900)
+    return () => clearInterval(t)
+  }, [setDocuments])
+
+  const onUpload = useCallback(
+    (files: File[]) => {
+      const newDocs: Document[] = files.map((f, i) => ({
+        id: 'u' + Date.now() + i,
+        title: f.name,
+        fileType: toFileType(f.name),
+        status: 'uploading',
+        progress: 0,
+        hasConflict: false,
+        pages: 1,
+        addedAt: 'just now',
+        size: f.size ? `${(f.size / 1024).toFixed(0)} KB` : '— KB',
+      }))
+      setDocuments((prev) => [...newDocs, ...prev])
+    },
+    [setDocuments]
+  )
+
+  const onDelete = useCallback(
+    (id: string) => {
+      setDocuments((docs) => docs.filter((d) => d.id !== id))
+      if (selectedDocId === id) backToList()
+    },
+    [setDocuments, selectedDocId, backToList]
+  )
+
+  function onToggleCollapsed() {
+    setLeftCollapsed((v) => {
+      if (!v) backToList()
+      return !v
+    })
+  }
+
+  const readyCount = documents.filter((d) => d.status === 'ready').length
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="px-3 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
-        <p
-          className="font-mono uppercase"
-          style={{ color: 'var(--fg-muted)', fontSize: '10px', letterSpacing: '0.12em' }}
-        >
-          Materials
-        </p>
-        {documents.length > 0 && (
-          <p
-            className="mt-0.5 font-mono"
-            style={{ color: 'var(--accent)', fontSize: '10px' }}
+    <>
+      <div className="panel-header">
+        {!leftCollapsed && <span className="label">Sources</span>}
+        <div className="meta">
+          {!leftCollapsed && (
+            <>
+              <span className="live-dot" />
+              <span>{readyCount} / {documents.length}</span>
+            </>
+          )}
+          <button
+            className="icon-btn collapse-btn"
+            onClick={onToggleCollapsed}
+            aria-label={leftCollapsed ? 'Expand sources' : 'Collapse sources'}
+            title={leftCollapsed ? 'Expand sources' : 'Collapse sources'}
           >
-            {documents.length} file{documents.length !== 1 ? 's' : ''}
-          </p>
-        )}
+            {leftCollapsed ? <ChevronRight /> : <ChevronLeft />}
+          </button>
+        </div>
       </div>
 
-      <UploadZone />
-
-      <div
-        className="flex-1 overflow-y-auto"
-        style={{ borderTop: '1px solid var(--border)' }}
-      >
-        {documents.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-10 gap-1">
-            <p className="font-mono text-center" style={{ color: 'var(--fg-muted)', fontSize: '11px' }}>
-              no materials yet
-            </p>
+      {leftPanelView === 'list' && (
+        <>
+          <UploadZone onFiles={onUpload} />
+          <div className="material-list-wrap">
+            <div className="list-section-head">
+              <span>library</span>
+              <span className="count">{documents.length}</span>
+              <span className="sort">↓ recent</span>
+            </div>
+            <div className="material-list">
+              {documents.map((d) => (
+                <MaterialRow
+                  key={d.id}
+                  doc={d}
+                  active={selectedDocId === d.id}
+                  onClick={(id) => {
+                    if (leftCollapsed) onToggleCollapsed()
+                    openDocument(id)
+                  }}
+                  onDelete={onDelete}
+                  collapsed={leftCollapsed}
+                />
+              ))}
+            </div>
           </div>
-        ) : (
-          documents.map((doc) => (
-            <MaterialRow
-              key={doc.id}
-              doc={doc}
-            />
-          ))
-        )}
-      </div>
-    </div>
+          {activeConflicts.length > 0 && (
+            <div className="resolver-bar">
+              <button className="resolver-btn">
+                <span className="resolver-icon"><Sparkle /></span>
+                <span className="resolver-text">
+                  <span className="resolver-title">Check for conflicts</span>
+                  <span className="resolver-sub">
+                    Spots disagreements between your files — the assistant asks before anything changes.
+                  </span>
+                </span>
+                <span className="resolver-count">
+                  <span className="n">{activeConflicts.length}</span>
+                  <span className="lbl">flagged</span>
+                </span>
+              </button>
+            </div>
+          )}
+        </>
+      )}
+
+      {leftPanelView === 'detail' && selectedDoc && (
+        <DetailView doc={selectedDoc} onBack={backToList} />
+      )}
+    </>
   )
 }

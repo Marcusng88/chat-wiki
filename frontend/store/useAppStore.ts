@@ -1,6 +1,7 @@
 'use client'
 
 import { create } from 'zustand'
+import { useShallow } from 'zustand/react/shallow'
 import type { Document, Message } from '@/lib/types'
 
 interface AppState {
@@ -82,4 +83,4 @@ export const useAppStore = create<AppState & AppActions>()((set) => ({
 }))
 
 export const useActiveConflicts = () =>
-  useAppStore((s) => s.documents.filter((d) => d.hasConflict))
+  useAppStore(useShallow((s) => s.documents.filter((d) => d.hasConflict)))
