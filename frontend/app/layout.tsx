@@ -26,7 +26,15 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${syne.variable} ${dmMono.variable} h-full`}>
+    <html lang="en" className={`${syne.variable} ${dmMono.variable} h-full`} suppressHydrationWarning>
+      <head>
+        {/* Set theme before first paint to avoid FOUC */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('cw:theme')||'dark';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body className="h-full">{children}</body>
     </html>
   )
