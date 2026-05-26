@@ -46,7 +46,7 @@ describe('ChatPanel — header', () => {
   it('renders app name and New Chat button', () => {
     render(<ChatPanel />)
     expect(screen.getByText('Chat Wiki')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'New Chat' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /new chat/i })).toBeInTheDocument()
   })
 })
 
@@ -57,7 +57,7 @@ describe('ChatPanel — New Chat', () => {
       threadId: 'old-thread',
     })
     render(<ChatPanel />)
-    fireEvent.click(screen.getByRole('button', { name: 'New Chat' }))
+    fireEvent.click(screen.getByRole('button', { name: /new chat/i }))
     const state = useAppStore.getState()
     expect(state.messages).toEqual([])
     expect(state.threadId).not.toBe('old-thread')

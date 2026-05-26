@@ -21,24 +21,24 @@ export default function ChatPanel() {
   return (
     <>
       <header
-        className="flex shrink-0 items-center gap-3 border-b px-4 py-3"
-        style={{ borderColor: 'var(--border)' }}
+        className="flex shrink-0 items-center gap-3 px-4 py-3"
+        style={{ borderBottom: '1px solid var(--border)' }}
       >
         <button
           aria-label="Open menu"
-          className="md:hidden"
+          className="md:hidden flex items-center justify-center"
           onClick={() => setIsMobileDrawerOpen(true)}
-          style={{ color: 'var(--fg)' }}
+          style={{ color: 'var(--fg-muted)' }}
         >
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-            <rect y="3" width="20" height="2" rx="1" />
-            <rect y="9" width="20" height="2" rx="1" />
-            <rect y="15" width="20" height="2" rx="1" />
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            <rect y="2" width="16" height="1.5" rx="0.75" />
+            <rect y="7.25" width="16" height="1.5" rx="0.75" />
+            <rect y="12.5" width="16" height="1.5" rx="0.75" />
           </svg>
         </button>
 
         <span
-          className="flex-1 text-sm font-semibold"
+          className="flex-1 text-sm font-bold tracking-wide"
           style={{ fontFamily: 'var(--font-display)', color: 'var(--fg)' }}
         >
           Chat Wiki
@@ -46,14 +46,52 @@ export default function ChatPanel() {
 
         <button
           onClick={handleNewChat}
-          className="rounded px-3 py-1 text-xs font-medium transition-colors"
-          style={{ background: 'var(--surface-hover)', color: 'var(--fg)' }}
+          className="rounded border px-3 py-1 font-mono transition-colors"
+          style={{
+            borderColor: 'var(--border)',
+            color: 'var(--fg-muted)',
+            fontSize: '11px',
+            letterSpacing: '0.03em',
+          }}
+          onMouseEnter={(e) => {
+            const el = e.currentTarget
+            el.style.borderColor = 'var(--fg-muted)'
+            el.style.color = 'var(--fg)'
+          }}
+          onMouseLeave={(e) => {
+            const el = e.currentTarget
+            el.style.borderColor = 'var(--border)'
+            el.style.color = 'var(--fg-muted)'
+          }}
         >
-          New Chat
+          new chat
         </button>
       </header>
 
-      <div className="flex flex-1 flex-col gap-3 overflow-y-auto p-4">
+      <div
+        className="flex flex-1 flex-col gap-4 overflow-y-auto px-5 py-5"
+        style={{ background: 'var(--bg)' }}
+      >
+        {messages.length === 0 && (
+          <div className="flex flex-1 flex-col items-center justify-center gap-3 opacity-40">
+            <div
+              className="font-mono text-xs"
+              style={{ color: 'var(--fg-muted)', letterSpacing: '0.08em' }}
+            >
+              NO MESSAGES
+            </div>
+            <div
+              className="h-px w-16"
+              style={{ background: 'var(--border)' }}
+            />
+            <div
+              className="font-mono text-xs text-center"
+              style={{ color: 'var(--fg-muted)', maxWidth: '200px', lineHeight: 1.6 }}
+            >
+              upload materials and start a conversation
+            </div>
+          </div>
+        )}
         {messages.map((msg) => (
           <MessageItem key={msg.id} msg={msg} />
         ))}

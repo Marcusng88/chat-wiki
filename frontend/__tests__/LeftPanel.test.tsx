@@ -54,23 +54,23 @@ describe('LeftPanel — delete flow', () => {
     useAppStore.setState({ documents: [MOCK_DOCS[0]] })
     render(<LeftPanel />)
     fireEvent.click(screen.getByRole('button', { name: 'Options for architecture.pdf' }))
-    expect(screen.getByRole('menuitem', { name: 'Delete' })).toBeInTheDocument()
+    expect(screen.getByRole('menuitem', { name: /delete/i })).toBeInTheDocument()
   })
 
   it('clicking Delete shows confirmation dialog', () => {
     useAppStore.setState({ documents: [MOCK_DOCS[0]] })
     render(<LeftPanel />)
     fireEvent.click(screen.getByRole('button', { name: 'Options for architecture.pdf' }))
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Delete' }))
-    expect(screen.getByText(/Delete.*architecture\.pdf/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('menuitem', { name: /delete/i }))
+    expect(screen.getByText(/Delete file\?/i)).toBeInTheDocument()
   })
 
   it('confirming delete removes doc from store', () => {
     useAppStore.setState({ documents: MOCK_DOCS })
     render(<LeftPanel />)
     fireEvent.click(screen.getByRole('button', { name: 'Options for architecture.pdf' }))
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Delete' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Confirm' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: /delete/i }))
+    fireEvent.click(screen.getByRole('button', { name: /confirm/i }))
     const docs = useAppStore.getState().documents
     expect(docs.find(d => d.id === 'doc-1')).toBeUndefined()
     expect(docs).toHaveLength(MOCK_DOCS.length - 1)
@@ -81,7 +81,7 @@ describe('LeftPanel — upload zone', () => {
   it('renders upload zone with accepted types label', () => {
     render(<LeftPanel />)
     expect(screen.getByTestId('upload-zone')).toBeInTheDocument()
-    expect(screen.getByText('PDF, MD, TXT, PPTX, Images')).toBeInTheDocument()
+    expect(screen.getByText(/pdf.*md.*txt.*pptx/i)).toBeInTheDocument()
   })
 
   it('dragover sets drag-active state on upload zone', () => {

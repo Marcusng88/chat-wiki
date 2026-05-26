@@ -3,7 +3,6 @@
 import { useRef, useState } from 'react'
 
 const ACCEPTED = '.pdf,.md,.txt,.pptx,.png,.jpg,.jpeg'
-const ACCEPTED_LABEL = 'PDF, MD, TXT, PPTX, Images'
 
 export default function UploadZone() {
   const [dragActive, setDragActive] = useState(false)
@@ -27,33 +26,48 @@ export default function UploadZone() {
     <div
       data-testid="upload-zone"
       data-drag-active={dragActive}
-      className="m-3 rounded-lg border-2 border-dashed p-4 text-center transition-colors"
-      style={{
-        borderColor: dragActive ? 'var(--accent)' : 'var(--border)',
-        background: dragActive ? 'color-mix(in srgb, var(--accent) 8%, transparent)' : 'transparent',
-      }}
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onDrop={onDrop}
+      className="mx-3 my-2 cursor-pointer select-none rounded border transition-all duration-150"
+      style={{
+        borderColor: dragActive ? 'var(--accent)' : 'var(--border)',
+        borderStyle: 'dashed',
+        background: dragActive
+          ? 'color-mix(in srgb, var(--accent) 6%, transparent)'
+          : 'transparent',
+        padding: '12px',
+      }}
+      onClick={() => inputRef.current?.click()}
     >
-      <p
-        className="mb-2 text-xs upload-drag-hint"
-        style={{ color: 'var(--fg-muted)' }}
-      >
-        Drop files here
-      </p>
+      <div className="flex flex-col items-center gap-2">
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 20 20"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          style={{ color: dragActive ? 'var(--accent)' : 'var(--fg-muted)' }}
+        >
+          <path d="M10 13V4M10 4L7 7M10 4l3 3" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M3 14v1a2 2 0 002 2h10a2 2 0 002-2v-1" strokeLinecap="round" />
+        </svg>
 
-      <button
-        className="rounded px-3 py-1.5 text-xs font-medium transition-colors"
-        style={{ background: 'var(--accent)', color: '#000' }}
-        onClick={() => inputRef.current?.click()}
-      >
-        Choose File
-      </button>
+        <p
+          className="upload-drag-hint text-center text-xs"
+          style={{ color: dragActive ? 'var(--accent)' : 'var(--fg-muted)', letterSpacing: '0.02em' }}
+        >
+          {dragActive ? 'release to upload' : 'drag files or click'}
+        </p>
 
-      <p className="mt-2 text-xs" style={{ color: 'var(--fg-muted)' }}>
-        {ACCEPTED_LABEL}
-      </p>
+        <p
+          className="text-center font-mono"
+          style={{ color: 'var(--fg-muted)', fontSize: '10px', opacity: 0.6 }}
+        >
+          PDF · MD · TXT · PPTX · Images
+        </p>
+      </div>
 
       <input
         ref={inputRef}
@@ -62,6 +76,7 @@ export default function UploadZone() {
         multiple
         className="sr-only"
         aria-label="Upload files"
+        onClick={(e) => e.stopPropagation()}
       />
     </div>
   )

@@ -9,26 +9,43 @@ export default function LeftPanel() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b px-4 py-3" style={{ borderColor: 'var(--border)' }}>
-        <h2 className="text-sm font-semibold" style={{ color: 'var(--fg)', fontFamily: 'var(--font-display)' }}>
+      <div className="px-3 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
+        <p
+          className="font-mono uppercase"
+          style={{ color: 'var(--fg-muted)', fontSize: '10px', letterSpacing: '0.12em' }}
+        >
           Materials
-        </h2>
+        </p>
+        {documents.length > 0 && (
+          <p
+            className="mt-0.5 font-mono"
+            style={{ color: 'var(--accent)', fontSize: '10px' }}
+          >
+            {documents.length} file{documents.length !== 1 ? 's' : ''}
+          </p>
+        )}
       </div>
 
       <UploadZone />
 
-      <div className="flex-1 overflow-y-auto">
-        {documents.map((doc) => (
-          <MaterialRow
-            key={doc.id}
-            doc={doc}
-            isConflicted={activeConflicts.includes(doc.id)}
-          />
-        ))}
-        {documents.length === 0 && (
-          <p className="px-4 py-6 text-center text-xs" style={{ color: 'var(--fg-muted)' }}>
-            No materials yet
-          </p>
+      <div
+        className="flex-1 overflow-y-auto"
+        style={{ borderTop: '1px solid var(--border)' }}
+      >
+        {documents.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-10 gap-1">
+            <p className="font-mono text-center" style={{ color: 'var(--fg-muted)', fontSize: '11px' }}>
+              no materials yet
+            </p>
+          </div>
+        ) : (
+          documents.map((doc) => (
+            <MaterialRow
+              key={doc.id}
+              doc={doc}
+              isConflicted={activeConflicts.includes(doc.id)}
+            />
+          ))
         )}
       </div>
     </div>

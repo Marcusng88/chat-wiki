@@ -10,8 +10,12 @@ export default function MessageItem({ msg }: { msg: Message }) {
     return (
       <div className="flex justify-end">
         <div
-          className="max-w-[75%] rounded-2xl px-4 py-2 text-sm"
-          style={{ background: 'var(--accent)', color: '#000' }}
+          className="max-w-[72%] rounded-xl px-4 py-2.5 text-sm leading-relaxed"
+          style={{
+            background: 'var(--accent)',
+            color: '#000',
+            fontFamily: 'var(--font-body)',
+          }}
         >
           {msg.content}
         </div>
@@ -21,12 +25,68 @@ export default function MessageItem({ msg }: { msg: Message }) {
 
   if (msg.type === 'agent') {
     return (
-      <div className="flex justify-start">
+      <div className="flex justify-start gap-2">
         <div
-          className="prose prose-invert max-w-[75%] text-sm"
-          style={{ color: 'var(--fg)' }}
+          className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded font-mono text-xs"
+          style={{ background: 'var(--surface-hover)', color: 'var(--accent)', fontSize: '9px' }}
         >
-          <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
+          AI
+        </div>
+        <div
+          className="prose-sm max-w-[80%] text-sm leading-relaxed"
+          style={{
+            color: 'var(--fg)',
+            fontFamily: 'var(--font-body)',
+          }}
+        >
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            rehypePlugins={[rehypeHighlight]}
+            components={{
+              p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+              code: ({ children, className }) => {
+                const isBlock = className?.includes('language-')
+                return isBlock ? (
+                  <code
+                    className={className}
+                    style={{
+                      display: 'block',
+                      background: 'var(--surface)',
+                      border: '1px solid var(--border)',
+                      borderRadius: '4px',
+                      padding: '8px 12px',
+                      fontSize: '12px',
+                      overflowX: 'auto',
+                    }}
+                  >
+                    {children}
+                  </code>
+                ) : (
+                  <code
+                    style={{
+                      background: 'var(--surface)',
+                      border: '1px solid var(--border)',
+                      borderRadius: '3px',
+                      padding: '1px 5px',
+                      fontSize: '12px',
+                      color: 'var(--accent)',
+                    }}
+                  >
+                    {children}
+                  </code>
+                )
+              },
+              ul: ({ children }) => (
+                <ul style={{ paddingLeft: '16px', marginBottom: '8px' }}>{children}</ul>
+              ),
+              li: ({ children }) => (
+                <li style={{ marginBottom: '2px', color: 'var(--fg)' }}>{children}</li>
+              ),
+              strong: ({ children }) => (
+                <strong style={{ color: 'var(--fg)', fontWeight: 600 }}>{children}</strong>
+              ),
+            }}
+          >
             {msg.content ?? ''}
           </ReactMarkdown>
         </div>
@@ -36,17 +96,28 @@ export default function MessageItem({ msg }: { msg: Message }) {
 
   if (msg.type === 'typing') {
     return (
-      <div data-testid="msg-typing" className="flex justify-start gap-1 py-2">
-        {[0, 1, 2].map((i) => (
-          <span
-            key={i}
-            className="inline-block h-2 w-2 animate-bounce rounded-full"
-            style={{
-              background: 'var(--fg-muted)',
-              animationDelay: `${i * 0.15}s`,
-            }}
-          />
-        ))}
+      <div data-testid="msg-typing" className="flex justify-start gap-2 items-center py-1">
+        <div
+          className="flex h-5 w-5 shrink-0 items-center justify-center rounded font-mono"
+          style={{ background: 'var(--surface-hover)', color: 'var(--accent)', fontSize: '9px' }}
+        >
+          AI
+        </div>
+        <div className="flex gap-1 items-center">
+          {[0, 1, 2].map((i) => (
+            <span
+              key={i}
+              className="inline-block rounded-full"
+              style={{
+                width: '5px',
+                height: '5px',
+                background: 'var(--fg-muted)',
+                animation: 'bounce 1.2s ease-in-out infinite',
+                animationDelay: `${i * 0.2}s`,
+              }}
+            />
+          ))}
+        </div>
       </div>
     )
   }
@@ -55,10 +126,18 @@ export default function MessageItem({ msg }: { msg: Message }) {
     return (
       <div
         data-testid="msg-hitl"
-        className="rounded-lg border px-4 py-3 text-sm"
-        style={{ borderColor: 'var(--accent)', color: 'var(--fg-muted)' }}
+        className="rounded border-l-2 py-3 pl-4 pr-3 text-xs"
+        style={{
+          borderLeftColor: 'var(--color-status-processing)',
+          background: 'var(--surface)',
+          color: 'var(--fg-muted)',
+          fontFamily: 'var(--font-body)',
+        }}
       >
-        Phase 2 — HITL card
+        <span style={{ color: 'var(--color-status-processing)', fontWeight: 500 }}>
+          HITL
+        </span>
+        {' — Phase 2'}
       </div>
     )
   }
@@ -67,10 +146,16 @@ export default function MessageItem({ msg }: { msg: Message }) {
     return (
       <div
         data-testid="msg-a2ui"
-        className="rounded-lg border px-4 py-3 text-sm"
-        style={{ borderColor: 'var(--border)', color: 'var(--fg-muted)' }}
+        className="rounded border-l-2 py-3 pl-4 pr-3 text-xs"
+        style={{
+          borderLeftColor: 'var(--accent)',
+          background: 'var(--surface)',
+          color: 'var(--fg-muted)',
+          fontFamily: 'var(--font-body)',
+        }}
       >
-        Phase 2 — A2UI card
+        <span style={{ color: 'var(--accent)', fontWeight: 500 }}>A2UI</span>
+        {' — Phase 2'}
       </div>
     )
   }
