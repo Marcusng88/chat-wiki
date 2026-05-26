@@ -1,176 +1,181 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { Document } from '@/lib/types'
 import { useAppStore } from '@/store/useAppStore'
+import { FileIcon, Alert, More, Eye, Upload, Sparkle, Trash } from './Icons'
 
-const EXT_ICONS: Record<string, string> = {
-  pdf: '⬡',
-  md: '◈',
-  txt: '◻',
-  pptx: '▣',
-  png: '◉',
-  jpg: '◉',
-  jpeg: '◉',
+const FILE_ICON_CLASS: Record<string, string> = {
+  pdf: 'ftype-pdf',
+  md: 'ftype-md',
+  txt: 'ftype-txt',
+  pptx: 'ftype-pptx',
+  img: 'ftype-img',
 }
 
-function fileIcon(name: string) {
-  const ext = name.split('.').pop()?.toLowerCase() ?? ''
-  return EXT_ICONS[ext] ?? '◻'
+function StatusBadge({ doc }: { doc: Document }) {
+  if (doc.status === 'ready')
+    return <span className="status-badge ready"><span className="pip" />ready</span>
+  if (doc.status === 'failed')
+    return <span className="status-badge failed"><span className="pip" />failed</span>
+  if (doc.status === 'uploading')
+    return (
+      <span className="status-badge uploading">
+        <span className="pip" />uploading{doc.progress != null ? ` ${Math.round(doc.progress)}%` : ''}
+      </span>
+    )
+  if (doc.status === 'processing') {
+    const stageLabel = (doc.stage ?? 'processing').replace('_', ' ')
+    return <span className="status-badge processing"><span className="pip" />{stageLabel}</span>
+  }
+  return <span className="status-badge">{doc.status}</span>
 }
 
-const STATUS_VAR: Record<string, string> = {
-  uploading: 'var(--color-status-uploading)',
-  processing: 'var(--color-status-processing)',
-  ready: 'var(--color-status-ready)',
-  failed: 'var(--color-status-failed)',
-  conflict: 'var(--color-status-conflict)',
-}
+interface TipState { top: number; left: number; side: 'right' | 'below' }
 
-export default function MaterialRow({
-  doc,
-  isConflicted,
-}: {
+interface Props {
   doc: Document
-  isConflicted: boolean
-}) {
+  active?: boolean
+  onClick?: (id: string) => void
+  onDelete?: (id: string) => void
+  collapsed?: boolean
+}
+
+export default function MaterialRow({ doc, active = false, onClick, onDelete, collapsed = false }: Props) {
   const [menuOpen, setMenuOpen] = useState(false)
-  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [tip, setTip] = useState<TipState | null>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+  const rowRef = useRef<HTMLDivElement>(null)
+  const tipTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const statusColor = isConflicted
-    ? 'var(--color-status-conflict)'
-    : STATUS_VAR[doc.status] ?? 'var(--fg-muted)'
+  useEffect(() => {
+    if (!menuOpen) return
+    function close(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false)
+    }
+    setTimeout(() => document.addEventListener('mousedown', close), 0)
+    return () => document.removeEventListener('mousedown', close)
+  }, [menuOpen])
 
-  const badgeLabel = isConflicted ? 'conflict' : doc.status
+  useEffect(() => {
+    if (!tip) return
+    function onScroll() { setTip(null) }
+    window.addEventListener('scroll', onScroll, true)
+    return () => window.removeEventListener('scroll', onScroll, true)
+  }, [tip])
 
-  function handleDeleteConfirm() {
-    useAppStore.getState().setDocuments((docs) => docs.filter((d) => d.id !== doc.id))
-    setConfirmOpen(false)
+  const isBusy = (doc.status === 'processing' || doc.status === 'uploading') && typeof doc.progress === 'number'
+  const isFailed = doc.status === 'failed'
+
+  const hint = isFailed
+    ? `Couldn't read this file${doc.failReason ? ' — ' + doc.failReason : ''}. Open the menu to try again or remove it.`
+    : doc.hasConflict
+      ? `Two of your files disagree on something here. When it matters for an answer, the assistant will ask you which one to trust.`
+      : null
+
+  function showTip() {
+    if (!hint || !rowRef.current) return
+    if (tipTimer.current) clearTimeout(tipTimer.current)
+    tipTimer.current = setTimeout(() => {
+      if (!rowRef.current) return
+      const r = rowRef.current.getBoundingClientRect()
+      if (collapsed) {
+        setTip({ top: r.top + r.height / 2, left: r.right + 12, side: 'right' })
+      } else {
+        setTip({ top: r.bottom + 6, left: r.left + 48, side: 'below' })
+      }
+    }, 320)
+  }
+
+  function hideTip() {
+    if (tipTimer.current) clearTimeout(tipTimer.current)
+    setTip(null)
+  }
+
+  function handleDelete(e: React.MouseEvent) {
+    e.stopPropagation()
+    setMenuOpen(false)
+    if (onDelete) {
+      onDelete(doc.id)
+    } else {
+      useAppStore.getState().setDocuments((docs) => docs.filter((d) => d.id !== doc.id))
+    }
   }
 
   return (
     <div
-      className="group relative flex items-center gap-2 px-3 py-2 transition-colors"
-      style={{
-        borderLeft: `2px solid ${statusColor}`,
-        background: 'transparent',
-        cursor: 'default',
-      }}
-      onMouseEnter={(e) => {
-        ;(e.currentTarget as HTMLElement).style.background = 'var(--surface-hover)'
-      }}
-      onMouseLeave={(e) => {
-        ;(e.currentTarget as HTMLElement).style.background = 'transparent'
-      }}
+      ref={rowRef}
+      data-testid={`material-row-${doc.id}`}
+      className={['material-row', active && 'active', menuOpen && 'menu-open', isFailed && 'is-failed', doc.hasConflict && 'has-conflict'].filter(Boolean).join(' ')}
+      onClick={() => onClick?.(doc.id)}
+      onMouseEnter={showTip}
+      onMouseLeave={hideTip}
     >
-      <span
-        aria-hidden="true"
-        className="shrink-0 text-xs"
-        style={{ color: statusColor, fontFamily: 'monospace', lineHeight: 1 }}
-      >
-        {fileIcon(doc.title)}
-      </span>
+      <div className={`file-icon ${FILE_ICON_CLASS[doc.fileType] ?? ''}`}>
+        <FileIcon type={doc.fileType} />
+        {isFailed && (
+          <span className="overlay-mark fail-mark" aria-label="failed">✕</span>
+        )}
+        {!isFailed && doc.hasConflict && (
+          <span className="overlay-mark conflict-mark" aria-label="conflict flagged">
+            <Alert />
+          </span>
+        )}
+      </div>
 
-      <span
-        className="flex-1 truncate text-xs"
-        title={doc.title}
-        style={{ color: 'var(--fg)', fontFamily: 'var(--font-body)', minWidth: 0 }}
-      >
-        {doc.title}
-      </span>
+      <div className="title-col">
+        <div className="title" title={doc.title}>{doc.title}</div>
+        <div className="sub">
+          {isBusy
+            ? <span className="busy">{(doc.stage ?? doc.status).replace('_', ' ')} · {Math.round(doc.progress!)}%</span>
+            : <span>{doc.addedAt}</span>
+          }
+        </div>
+      </div>
 
-      <span
-        data-testid={`status-badge-${doc.id}`}
-        className="shrink-0 font-mono"
-        style={{ color: statusColor, fontSize: '9px', letterSpacing: '0.05em', textTransform: 'uppercase' }}
-      >
-        {badgeLabel}
-      </span>
-
-      <button
-        aria-label={`Options for ${doc.title}`}
-        className="shrink-0 rounded px-1 opacity-0 transition-opacity group-hover:opacity-100"
-        style={{ color: 'var(--fg-muted)', fontSize: '13px', lineHeight: 1 }}
-        onClick={() => setMenuOpen((v) => !v)}
-      >
-        ···
-      </button>
-
-      {menuOpen && (
-        <>
-          <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
-          <div
-            role="menu"
-            className="absolute right-2 top-8 z-20 min-w-[100px] rounded border py-1 shadow-xl"
-            style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
-          >
-            <button
-              role="menuitem"
-              className="block w-full px-3 py-1.5 text-left font-mono transition-colors"
-              style={{ color: 'var(--color-status-failed)', fontSize: '11px' }}
-              onMouseEnter={(e) =>
-                ((e.target as HTMLElement).style.background = 'var(--surface-hover)')
-              }
-              onMouseLeave={(e) =>
-                ((e.target as HTMLElement).style.background = 'transparent')
-              }
-              onClick={() => {
-                setMenuOpen(false)
-                setConfirmOpen(true)
-              }}
-            >
-              delete
+      <div className="menu-wrap" ref={menuRef}>
+        <button
+          className="row-menu-btn"
+          onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v) }}
+          aria-label="More actions"
+        >
+          <More />
+        </button>
+        {menuOpen && (
+          <div className="row-menu" onClick={(e) => e.stopPropagation()}>
+            <button onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onClick?.(doc.id) }}>
+              <Eye /><span>Open</span>
+            </button>
+            <button onClick={(e) => e.stopPropagation()}>
+              <Upload style={{ transform: 'rotate(180deg)' }} /><span>Download</span>
+            </button>
+            <button onClick={(e) => e.stopPropagation()}>
+              <Sparkle /><span>Re-ingest</span>
+            </button>
+            <div className="row-menu-sep" />
+            <button className="danger" onClick={handleDelete}>
+              <Trash /><span>Delete source</span>
             </button>
           </div>
-        </>
+        )}
+      </div>
+
+      {isBusy && (
+        <div className="progress-rail">
+          <div className="fill" style={{ width: `${Math.round(doc.progress!)}%` }} />
+        </div>
       )}
 
-      {confirmOpen && (
-        <>
-          <div
-            className="fixed inset-0 z-40"
-            style={{ background: 'rgba(0,0,0,0.6)' }}
-            onClick={() => setConfirmOpen(false)}
-          />
-          <dialog
-            open
-            className="fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 rounded border p-5 shadow-2xl"
-            style={{
-              background: 'var(--surface)',
-              borderColor: 'var(--border)',
-              color: 'var(--fg)',
-              minWidth: '260px',
-              margin: 0,
-            }}
-          >
-            <p className="mb-1 text-xs font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
-              Delete file?
-            </p>
-            <p
-              className="mb-4 truncate font-mono"
-              style={{ color: 'var(--fg-muted)', fontSize: '11px' }}
-            >
-              {doc.title}
-            </p>
-            <div className="flex gap-2 justify-end">
-              <button
-                className="rounded border px-3 py-1 font-mono text-xs transition-colors"
-                style={{ borderColor: 'var(--border)', color: 'var(--fg-muted)' }}
-                onClick={() => setConfirmOpen(false)}
-              >
-                cancel
-              </button>
-              <button
-                className="rounded px-3 py-1 font-mono text-xs transition-colors"
-                style={{ background: 'var(--color-status-failed)', color: '#fff' }}
-                onClick={handleDeleteConfirm}
-              >
-                Confirm
-              </button>
-            </div>
-          </dialog>
-        </>
+      {tip && (
+        <div
+          className={['floating-tip', `side-${tip.side}`, isFailed && 'is-failed', doc.hasConflict && 'has-conflict'].filter(Boolean).join(' ')}
+          style={{ top: tip.top, left: tip.left }}
+        >
+          {hint}
+        </div>
       )}
     </div>
   )
 }
+
+export { StatusBadge }

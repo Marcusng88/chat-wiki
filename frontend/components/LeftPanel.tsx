@@ -43,7 +43,6 @@ export default function LeftPanel() {
             <MaterialRow
               key={doc.id}
               doc={doc}
-              isConflicted={doc.hasConflict}
             />
           ))
         )}
