@@ -1,14 +1,15 @@
 'use client'
 
 import { useAppStore } from '@/store/useAppStore'
+import LeftPanel from './LeftPanel'
 
 export default function TwoPanelShell() {
   const { isMobileDrawerOpen, setIsMobileDrawerOpen } = useAppStore()
 
   return (
     <div className="flex h-full overflow-hidden">
-      <aside data-testid="left-panel" className="hidden md:flex w-[280px] shrink-0 flex-col overflow-y-auto border-r" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
-        <p className="p-4" style={{ color: 'var(--fg-muted)' }}>Left Panel</p>
+      <aside data-testid="left-panel" className="hidden md:flex w-[280px] shrink-0 flex-col border-r" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+        <LeftPanel />
       </aside>
 
       {isMobileDrawerOpen && (
@@ -18,8 +19,8 @@ export default function TwoPanelShell() {
             aria-label="Close drawer"
             onClick={() => setIsMobileDrawerOpen(false)}
           />
-          <aside className="fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col overflow-y-auto md:hidden" style={{ background: 'var(--surface)' }}>
-            <p className="p-4" style={{ color: 'var(--fg-muted)' }}>Left Panel</p>
+          <aside className="fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col md:hidden" style={{ background: 'var(--surface)' }}>
+            <LeftPanel />
           </aside>
         </>
       )}
