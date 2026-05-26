@@ -1,7 +1,10 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/useAppStore'
+import { useConfirm } from '@/lib/hooks/useConfirm'
+import { createClient } from '@/lib/supabase'
 import LeftPanel from './LeftPanel'
 import ChatPanel from './ChatPanel'
 import ThemeToggle from './ThemeToggle'
@@ -77,6 +80,8 @@ function AppHeader() {
   const { setMobileDrawerOpen } = useAppStore()
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  const router = useRouter()
+  const requestConfirm = useConfirm()
 
   useEffect(() => {
     if (!menuOpen) return
@@ -86,6 +91,20 @@ function AppHeader() {
     setTimeout(() => document.addEventListener('mousedown', close), 0)
     return () => document.removeEventListener('mousedown', close)
   }, [menuOpen])
+
+  const handleSignOut = useCallback(async () => {
+    setMenuOpen(false)
+    const ok = await requestConfirm({
+      title: 'Sign out?',
+      message: `You'll need to sign back in to see your library. Your files and chats stay safe.`,
+      confirmText: 'Sign out',
+      cancelText: 'Stay',
+    })
+    if (!ok) return
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/sign-in')
+  }, [requestConfirm, router])
 
   return (
     <header className="app-header">
@@ -135,7 +154,7 @@ function AppHeader() {
               </button>
               <button
                 className="account-item danger"
-                onClick={() => setMenuOpen(false)}
+                onClick={handleSignOut}
               >
                 <LogOut />
                 <span>Sign out</span>

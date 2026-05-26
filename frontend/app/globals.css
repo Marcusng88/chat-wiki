@@ -8,6 +8,7 @@
 @import "./styles/_input.css";
 @import "./styles/_dialog.css";
 @import "./styles/_misc.css";
+@import "./styles/_signin.css";
 
 :root {
   /* ── page & panel ── */
@@ -28,7 +29,6 @@
 
   /* ── accent ── */
   --accent: #06b6d4;
-  --accent-hover: #0891b2;
   --accent-dim: rgba(6, 182, 212, 0.14);
   --accent-ring: rgba(6, 182, 212, 0.35);
 

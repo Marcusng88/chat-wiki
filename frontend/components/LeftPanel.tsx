@@ -92,6 +92,17 @@ export default function LeftPanel() {
     [documents, setDocuments, selectedDocId, backToList, requestConfirm]
   )
 
+  const onResolverClick = useCallback(async () => {
+    const ok = await requestConfirm({
+      title: 'Check for conflicts?',
+      message: `I'll quietly scan files I haven't checked yet and mark anything that looks like a disagreement. Nothing actually changes — the next time one of those topics comes up in chat, the assistant will ask you which file to trust.`,
+      confirmText: 'Start checking',
+      cancelText: 'Not now',
+    })
+    if (!ok) return
+    // TODO: call POST /agent/resolve
+  }, [requestConfirm])
+
   function onToggleCollapsed() {
     setLeftCollapsed((v) => {
       if (!v) backToList()
@@ -150,7 +161,7 @@ export default function LeftPanel() {
           </div>
           {activeConflicts.length > 0 && (
             <div className="resolver-bar">
-              <button className="resolver-btn">
+              <button className="resolver-btn" onClick={onResolverClick}>
                 <span className="resolver-icon"><Sparkle /></span>
                 <span className="resolver-text">
                   <span className="resolver-title">Check for conflicts</span>

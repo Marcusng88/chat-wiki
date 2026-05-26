@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react'
 import type { Document } from '@/lib/types'
-import { useAppStore } from '@/store/useAppStore'
 import { FileIcon, Alert, More, Eye, Upload, Sparkle, Trash } from './Icons'
 
 const FILE_ICON_CLASS: Record<string, string> = {
@@ -95,11 +94,7 @@ export default function MaterialRow({ doc, active = false, onClick, onDelete, co
   function handleDelete(e: React.MouseEvent) {
     e.stopPropagation()
     setMenuOpen(false)
-    if (onDelete) {
-      onDelete(doc.id)
-    } else {
-      useAppStore.getState().setDocuments((docs) => docs.filter((d) => d.id !== doc.id))
-    }
+    onDelete?.(doc.id)
   }
 
   return (
