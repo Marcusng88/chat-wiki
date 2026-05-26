@@ -1,0 +1,168 @@
+/* ── Shell layout ── */
+.shell {
+  position: fixed;
+  top: var(--header-h);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 24px;
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+}
+.shell-inner {
+  width: 100%;
+  max-width: 1400px;
+  display: grid;
+  grid-template-columns: var(--left-w, 520px) 8px minmax(0, 1fr);
+  gap: 0;
+  height: 100%;
+  transition: grid-template-columns 0.22s cubic-bezier(.4,.0,.2,1);
+}
+.shell-inner.left-collapsed {
+  grid-template-columns: 64px 8px minmax(0, 1fr);
+}
+.shell-inner.left-collapsed .resizer {
+  pointer-events: none;
+  opacity: 0;
+}
+
+/* ── Resizer ── */
+.resizer {
+  position: relative;
+  cursor: col-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  z-index: 5;
+}
+.resizer::before {
+  content: "";
+  width: 2px;
+  height: 36px;
+  background: var(--panel-border);
+  border-radius: 999px;
+  transition: background 0.15s, height 0.15s;
+}
+.resizer:hover::before,
+.resizer.dragging::before {
+  background: var(--accent);
+  height: 56px;
+  box-shadow: 0 0 12px var(--accent-ring);
+}
+.resizer::after {
+  content: "";
+  position: absolute;
+  inset: 0 -6px;
+}
+body.resizing { cursor: col-resize; user-select: none; }
+body.resizing .resizer::before { background: var(--accent); height: 56px; }
+
+/* ── Panel ── */
+.panel {
+  background: var(--panel-bg);
+  border-radius: var(--panel-radius);
+  border: 1px solid var(--panel-border);
+  box-shadow: var(--panel-shadow);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+  position: relative;
+}
+.panel-header {
+  height: 48px;
+  flex: 0 0 48px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--panel-border);
+  gap: 10px;
+}
+.panel-header .label {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.panel-header .meta {
+  margin-left: auto;
+  color: var(--text-secondary);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.panel-header .meta .live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--status-ready);
+  box-shadow: 0 0 8px var(--status-ready);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* ── Collapse button ── */
+.collapse-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  color: var(--text-secondary);
+  transition: all 0.15s;
+  background: transparent;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.collapse-btn:hover { color: var(--accent); background: var(--surface-hover); }
+
+/* ── Back button ── */
+.back-btn {
+  align-self: flex-start;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 4px 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.back-btn:hover { color: var(--accent); }
+
+/* ── Mobile ── */
+@media (max-width: 880px) {
+  .shell { padding: 12px; }
+  .shell-inner { grid-template-columns: 1fr; }
+  .resizer { display: none; }
+  .panel.left-panel {
+    position: fixed;
+    top: var(--header-h);
+    left: 0;
+    bottom: 0;
+    width: 86vw;
+    max-width: 360px;
+    z-index: 40;
+    transform: translateX(-105%);
+    transition: transform 0.25s ease;
+    border-radius: 0 var(--panel-radius) var(--panel-radius) 0;
+    margin: 12px 0;
+  }
+  .panel.left-panel.open { transform: translateX(0); }
+  .mobile-backdrop {
+    position: fixed;
+    inset: var(--header-h) 0 0 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 35;
+  }
+  .hamburger { display: inline-flex; }
+}
