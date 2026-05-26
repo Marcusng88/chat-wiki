@@ -1,101 +1,155 @@
 'use client'
-
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAppStore } from '@/store/useAppStore'
+import { useConfirm } from '@/lib/hooks/useConfirm'
 import MessageItem from './MessageItem'
+import { Plus, Send } from './Icons'
+
+const SUGGESTIONS = [
+  'summarize my notes on attention variants',
+  'what changed between april and may decisions?',
+  'find every mention of HITL approval flow',
+]
 
 export default function ChatPanel() {
-  const { messages, clearMessages, setMobileDrawerOpen } = useAppStore()
-  const bottomRef = useRef<HTMLDivElement>(null)
+  const {
+    messages,
+    setMessages,
+    documents,
+    isStreaming,
+    setIsStreaming,
+    clearMessages,
+    openDocument,
+    setLeftCollapsed,
+  } = useAppStore()
+  const requestConfirm = useConfirm()
+  const [input, setInput] = useState('')
+  const taRef = useRef<HTMLTextAreaElement>(null)
+  const bodyRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+    if (bodyRef.current) bodyRef.current.scrollTop = bodyRef.current.scrollHeight
+  }, [messages, isStreaming])
 
-  function handleNewChat() {
-    const newThreadId = crypto.randomUUID()
-    clearMessages(newThreadId)
-    fetch('/api/thread', { method: 'DELETE' }).catch(() => {})
-  }
+  const autoSize = useCallback(() => {
+    const ta = taRef.current
+    if (!ta) return
+    ta.style.height = 'auto'
+    ta.style.height = Math.min(132, Math.max(22, ta.scrollHeight)) + 'px'
+  }, [])
+
+  useEffect(() => { autoSize() }, [input, autoSize])
+
+  const openDoc = useCallback((id: string) => {
+    setLeftCollapsed(false)
+    openDocument(id)
+  }, [setLeftCollapsed, openDocument])
+
+  const send = useCallback((textOverride?: string) => {
+    const text = (typeof textOverride === 'string' ? textOverride : input).trim()
+    if (!text || isStreaming) return
+    const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    setMessages((m) => [
+      ...m,
+      { id: 'u' + Date.now(), role: 'user' as const, content: text, ts: now },
+      { id: 't' + Date.now(), role: 'typing' as const },
+    ])
+    setInput('')
+    setIsStreaming(true)
+
+    setTimeout(() => {
+      setMessages((m) => {
+        const filtered = m.filter((x) => x.role !== 'typing')
+        const ready = documents.filter((d) => d.status === 'ready')
+        const first = ready[0] ?? documents[0]
+        const reply = {
+          id: 'a' + Date.now(),
+          role: 'agent' as const,
+          ts: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          md: first
+            ? `Based on your library, the most relevant material is **${first.title}** [[1]](#s1). Here's what I found:\n\n- Wiki page is *ready* and was last regenerated when you uploaded the file.\n- No conflicting claims with newer sources on this specific topic.\n- I can pull a deeper excerpt or open the raw source — just ask.`
+            : `I don't see any ready documents in your library yet. Upload some files and I'll be able to answer questions from them.`,
+          sources: first
+            ? [{ idx: 1, docId: first.id, name: first.title, loc: '§ 1', snippet: 'Most relevant section pulled from this document.' }]
+            : [],
+        }
+        return [...filtered, reply]
+      })
+      setIsStreaming(false)
+    }, 1600)
+  }, [input, isStreaming, setMessages, setIsStreaming, documents])
+
+  const handleNewChat = useCallback(async () => {
+    const ok = await requestConfirm({
+      title: 'Start a new chat?',
+      message: 'This conversation will close, but your files stay where they are.',
+      confirmText: 'New chat',
+      cancelText: 'Keep this one',
+    })
+    if (!ok) return
+    clearMessages(crypto.randomUUID())
+  }, [requestConfirm, clearMessages])
+
+  const readyCount = documents.filter((d) => d.status === 'ready').length
 
   return (
     <>
-      <header
-        className="flex shrink-0 items-center gap-3 px-4 py-3"
-        style={{ borderBottom: '1px solid var(--border)' }}
-      >
-        <button
-          aria-label="Open menu"
-          className="md:hidden flex items-center justify-center"
-          onClick={() => setMobileDrawerOpen(true)}
-          style={{ color: 'var(--fg-muted)' }}
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-            <rect y="2" width="16" height="1.5" rx="0.75" />
-            <rect y="7.25" width="16" height="1.5" rx="0.75" />
-            <rect y="12.5" width="16" height="1.5" rx="0.75" />
-          </svg>
-        </button>
+      <div className="panel-header">
+        <span className="label">Chat</span>
+        <div className="meta">
+          <button className="ghost-btn primary" onClick={handleNewChat}>
+            <Plus />
+            <span>New chat</span>
+          </button>
+        </div>
+      </div>
 
-        <span
-          className="flex-1 text-sm font-bold tracking-wide"
-          style={{ fontFamily: 'var(--font-display)', color: 'var(--fg)' }}
-        >
-          Chat Wiki
-        </span>
-
-        <button
-          onClick={handleNewChat}
-          className="rounded border px-3 py-1 font-mono transition-colors"
-          style={{
-            borderColor: 'var(--border)',
-            color: 'var(--fg-muted)',
-            fontSize: '11px',
-            letterSpacing: '0.03em',
-          }}
-          onMouseEnter={(e) => {
-            const el = e.currentTarget
-            el.style.borderColor = 'var(--fg-muted)'
-            el.style.color = 'var(--fg)'
-          }}
-          onMouseLeave={(e) => {
-            const el = e.currentTarget
-            el.style.borderColor = 'var(--border)'
-            el.style.color = 'var(--fg-muted)'
-          }}
-        >
-          new chat
-        </button>
-      </header>
-
-      <div
-        className="flex flex-1 flex-col gap-4 overflow-y-auto px-5 py-5"
-        style={{ background: 'var(--bg)' }}
-      >
-        {messages.length === 0 && (
-          <div className="flex flex-1 flex-col items-center justify-center gap-3 opacity-40">
-            <div
-              className="font-mono text-xs"
-              style={{ color: 'var(--fg-muted)', letterSpacing: '0.08em' }}
-            >
-              NO MESSAGES
-            </div>
-            <div
-              className="h-px w-16"
-              style={{ background: 'var(--border)' }}
+      <div className="chat-body" ref={bodyRef}>
+        {messages.map((m, idx) => {
+          const isLastAgent =
+            m.role === 'agent' &&
+            !isStreaming &&
+            messages.slice(idx + 1).every((x) => x.role !== 'agent' && x.role !== 'hitl' && x.role !== 'typing')
+          return (
+            <MessageItem
+              key={m.id}
+              msg={m}
+              onOpenDoc={openDoc}
+              onResolveHitl={() => {}}
+              suggestions={isLastAgent ? SUGGESTIONS.map((s) => ({ text: s, onPick: send })) : null}
             />
-            <div
-              className="font-mono text-xs text-center"
-              style={{ color: 'var(--fg-muted)', maxWidth: '200px', lineHeight: 1.6 }}
+          )
+        })}
+      </div>
+
+      <div className="chat-input-wrap">
+        <div className={`chat-input${isStreaming ? ' disabled' : ''}`}>
+          <textarea
+            ref={taRef}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() }
+            }}
+            placeholder={isStreaming ? 'agent is responding…' : 'ask about your knowledge — enter to send, shift+enter newline'}
+            rows={1}
+          />
+          <div className="chat-input-bottom">
+            <span className="scope-chip">
+              <span className="pip" />
+              {readyCount} sources in scope
+            </span>
+            <span className="hint">⏎ send · ⇧⏎ newline</span>
+            <button
+              className="send"
+              onClick={() => send()}
+              disabled={!input.trim() || isStreaming}
+              aria-label="Send"
             >
-              upload materials and start a conversation
-            </div>
+              <Send />
+            </button>
           </div>
-        )}
-        {messages.map((msg) => (
-          <MessageItem key={msg.id} msg={msg} />
-        ))}
-        <div ref={bottomRef} />
+        </div>
       </div>
     </>
   )

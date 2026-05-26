@@ -5,6 +5,7 @@ import { useAppStore } from '@/store/useAppStore'
 import LeftPanel from './LeftPanel'
 import ChatPanel from './ChatPanel'
 import ThemeToggle from './ThemeToggle'
+import ConfirmDialog from './ConfirmDialog'
 import { Menu, Eye, LogOut } from './Icons'
 
 // ── Resizer ──────────────────────────────────────────────────────────────────
@@ -198,6 +199,8 @@ export default function TwoPanelShell() {
           onClick={() => setMobileDrawerOpen(false)}
         />
       )}
+
+      <ConfirmDialog />
     </>
   )
 }

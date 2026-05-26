@@ -17,6 +17,7 @@ interface AppState {
 
 interface AppActions {
   setDocuments: (docs: Document[] | ((prev: Document[]) => Document[])) => void
+  setMessages: (msgs: Message[] | ((prev: Message[]) => Message[])) => void
   addMessage: (msg: Message) => void
   updateMessage: (id: string, patch: Partial<Message>) => void
   clearMessages: (newThreadId: string) => void
@@ -46,6 +47,9 @@ export const useAppStore = create<AppState & AppActions>()((set) => ({
 
   setDocuments: (docs) =>
     set((s) => ({ documents: typeof docs === 'function' ? docs(s.documents) : docs })),
+
+  setMessages: (msgs) =>
+    set((s) => ({ messages: typeof msgs === 'function' ? msgs(s.messages) : msgs })),
 
   addMessage: (msg) =>
     set((s) => ({ messages: [...s.messages, msg] })),

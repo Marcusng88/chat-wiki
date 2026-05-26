@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect } from 'react'
 import { useAppStore, useActiveConflicts } from '@/store/useAppStore'
+import { useConfirm } from '@/lib/hooks/useConfirm'
 import type { Document, FileType, ProcessingStage } from '@/lib/types'
 import MaterialRow from './MaterialRow'
 import UploadZone from './UploadZone'
@@ -27,6 +28,7 @@ export default function LeftPanel() {
     setLeftCollapsed,
   } = useAppStore()
   const activeConflicts = useActiveConflicts()
+  const requestConfirm = useConfirm()
   const selectedDoc = documents.find((d) => d.id === selectedDocId)
 
   // Animate processing / uploading progress in dev
@@ -73,11 +75,21 @@ export default function LeftPanel() {
   )
 
   const onDelete = useCallback(
-    (id: string) => {
+    async (id: string) => {
+      const doc = documents.find((d) => d.id === id)
+      if (!doc) return
+      const ok = await requestConfirm({
+        title: `Delete "${doc.title}"?`,
+        message: `The file is removed for good, along with everything the assistant learned from it. Your other files aren't touched.`,
+        confirmText: 'Delete',
+        cancelText: 'Keep it',
+        danger: true,
+      })
+      if (!ok) return
       setDocuments((docs) => docs.filter((d) => d.id !== id))
       if (selectedDocId === id) backToList()
     },
-    [setDocuments, selectedDocId, backToList]
+    [documents, setDocuments, selectedDocId, backToList, requestConfirm]
   )
 
   function onToggleCollapsed() {
