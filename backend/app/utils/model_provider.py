@@ -5,7 +5,7 @@ from app.utils.config import settings
 
 def get_llm(temperature: float = 0.0):
     return init_chat_model(
-        "openai:gpt-4o-mini",
+        "openai:gpt-5.4-nano-2026-03-17",
         temperature=temperature,
         api_key=settings.openai_api_key,
     )

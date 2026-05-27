@@ -4,13 +4,19 @@ from psycopg.rows import dict_row
 from app.db.db import get_conn
 
 VALID_STATUSES = {
-    "processing",
-    "failed_extract",
-    "failed_embed",
-    "failed_wiki",
-    "failed_index",
+    "uploaded",
+    "extracting",
+    "chunking",
+    "embedding",
+    "generating_wiki",
+    "indexing",
     "conflict_scan",
     "ready",
+    "failed_extraction",
+    "failed_embedding",
+    "failed_wiki",
+    "failed_indexing",
+    "unsupported",
 }
 
 
@@ -18,17 +24,18 @@ VALID_STATUSES = {
 async def update_status(document_id: str, status: str) -> str:
     """Update the processing status of a document.
 
-    Use this at the start of ingestion (processing), after each failed stage
-    (failed_*), and at the end of a successful pipeline (conflict_scan then ready).
+    Use this at the start of each pipeline stage and on failure. Call in order:
+    extracting → chunking → embedding → generating_wiki → indexing → conflict_scan → ready.
     Do NOT call with "ready" unless extract, chunk_and_embed, save_wiki, and
     save_index have all completed without error.
 
     Args:
-        document_id: UUID of the document to update. Use exactly as provided —
-            do not modify or shorten.
-        status: New status value. Must be one of: processing, failed_extract,
-            failed_embed, failed_wiki, failed_index, conflict_scan, ready.
-            Use failed_<stage> only when that specific stage raised an error.
+        document_id: UUID of the document to update. Do not modify or shorten.
+        status: New status value. Must be one of: uploaded, extracting, chunking,
+            embedding, generating_wiki, indexing, conflict_scan, ready,
+            failed_extraction, failed_embedding, failed_wiki, failed_indexing,
+            unsupported. Use failed_<stage> only when that specific stage raised
+            an error.
 
     Returns:
         Confirmation string with document_id and new status.
