@@ -88,7 +88,7 @@ function AppHeader() {
     function close(e: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false)
     }
-    setTimeout(() => document.addEventListener('mousedown', close), 0)
+    document.addEventListener('mousedown', close)
     return () => document.removeEventListener('mousedown', close)
   }, [menuOpen])
 

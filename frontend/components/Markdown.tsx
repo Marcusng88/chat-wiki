@@ -81,17 +81,18 @@ export default function Markdown({ md, onCite, sources }: Props) {
   return (
     <div className="md">
       {blocks.map((b, k) => {
-        if (b.t === 'hr') return <hr key={k} />
-        if (b.t === 'h1') return <h1 key={k}>{renderInline(b.c as string, cite, sources)}</h1>
-        if (b.t === 'h2') return <h2 key={k}>{renderInline(b.c as string, cite, sources)}</h2>
-        if (b.t === 'h3') return <h3 key={k}>{renderInline(b.c as string, cite, sources)}</h3>
-        if (b.t === 'quote') return <blockquote key={k}>{renderInline(b.c as string, cite, sources)}</blockquote>
+        const bk = `${b.t}-${k}`
+        if (b.t === 'hr') return <hr key={bk} />
+        if (b.t === 'h1') return <h1 key={bk}>{renderInline(b.c as string, cite, sources)}</h1>
+        if (b.t === 'h2') return <h2 key={bk}>{renderInline(b.c as string, cite, sources)}</h2>
+        if (b.t === 'h3') return <h3 key={bk}>{renderInline(b.c as string, cite, sources)}</h3>
+        if (b.t === 'quote') return <blockquote key={bk}>{renderInline(b.c as string, cite, sources)}</blockquote>
         if (b.t === 'ul') return (
-          <ul key={k}>
-            {(b.c as string[]).map((it, j) => <li key={j}>{renderInline(it, cite, sources)}</li>)}
+          <ul key={bk}>
+            {(b.c as string[]).map((it, j) => <li key={`${bk}-${j}`}>{renderInline(it, cite, sources)}</li>)}
           </ul>
         )
-        return <p key={k}>{renderInline(b.c as string, cite, sources)}</p>
+        return <p key={bk}>{renderInline(b.c as string, cite, sources)}</p>
       })}
     </div>
   )

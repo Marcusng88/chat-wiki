@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { Document } from '@/lib/types'
 import { Back } from './Icons'
 
@@ -15,6 +15,8 @@ interface Props {
 
 export default function DetailView({ doc, onBack }: Props) {
   const [tab, setTab] = useState<'wiki' | 'raw' | 'meta'>('wiki')
+
+  useEffect(() => { setTab('wiki') }, [doc.id])
 
   return (
     <div className="detail-view">
