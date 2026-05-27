@@ -2,15 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react'
 import type { Document } from '@/lib/types'
+import { FILE_TYPE_ICON_CLASS } from '@/lib/types'
 import { FileIcon, Alert, More, Eye, Trash } from './Icons'
-
-const FILE_ICON_CLASS: Record<string, string> = {
-  pdf: 'ftype-pdf',
-  md: 'ftype-md',
-  txt: 'ftype-txt',
-  pptx: 'ftype-pptx',
-  img: 'ftype-img',
-}
 
 const FAILED_STATUSES = new Set(['failed', 'failed_extraction', 'failed_embedding', 'failed_wiki', 'failed_indexing'])
 const PROCESSING_STATUSES = new Set(['uploaded', 'extracting', 'chunking', 'embedding', 'generating_wiki', 'indexing', 'conflict_scan'])
@@ -113,7 +106,7 @@ export default function MaterialRow({ doc, active = false, onClick, onDelete, co
       onMouseEnter={showTip}
       onMouseLeave={hideTip}
     >
-      <div className={`file-icon ${FILE_ICON_CLASS[doc.fileType] ?? ''}`}>
+      <div className={`file-icon ${FILE_TYPE_ICON_CLASS[doc.fileType] ?? ''}`}>
         <FileIcon type={doc.fileType} />
         {isFailed && (
           <span className="overlay-mark fail-mark" aria-label="failed">✕</span>

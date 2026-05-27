@@ -2,25 +2,20 @@
 
 import { useEffect } from 'react'
 import { useAppStore } from '@/store/useAppStore'
-import { listDocuments, DocumentResponse } from '@/lib/api'
-import type { Document, DocumentStatus, FileType } from '@/lib/types'
+import { listDocuments } from '@/lib/api'
+import { fileTypeFromApi } from '@/lib/types'
+import type { Document, DocumentStatus } from '@/lib/types'
 
 const PROCESSING_STATUSES = new Set([
   'uploaded', 'extracting', 'chunking', 'embedding',
   'generating_wiki', 'indexing', 'conflict_scan',
 ])
 
-function toFileType(fileType: string): FileType {
-  if (fileType === 'pdf' || fileType === 'md' || fileType === 'txt' || fileType === 'pptx') return fileType
-  if (fileType === 'image') return 'img'
-  return 'txt'
-}
-
 export function rowToDocument(r: Awaited<ReturnType<typeof listDocuments>>[number]): Document {
   return {
     id: r.id,
     title: r.title,
-    fileType: toFileType(r.file_type),
+    fileType: fileTypeFromApi(r.file_type),
     status: r.status as DocumentStatus,
     hasConflict: r.has_conflict,
     pages: 1,

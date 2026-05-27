@@ -1,6 +1,7 @@
 import base64
 import io
 import logging
+from collections.abc import Callable
 from langchain_core.messages import HumanMessage
 from langchain_core.tools import tool
 from psycopg.rows import dict_row
@@ -71,6 +72,33 @@ def _extract_pptx(data: bytes) -> str:
     return "\n\n".join(parts)
 
 
+def _extract_plain(data: bytes, _path: str) -> str:
+    return data.decode("utf-8", errors="replace")
+
+
+def _extract_pdf_dispatch(data: bytes, _path: str) -> str:
+    return _extract_pdf(data)
+
+
+def _extract_pptx_dispatch(data: bytes, _path: str) -> str:
+    return _extract_pptx(data)
+
+
+def _extract_image_dispatch(data: bytes, path: str) -> str:
+    ext = path.rsplit(".", 1)[-1].lower() if "." in path else "jpeg"
+    mime = {"jpg": "jpeg", "jpeg": "jpeg", "png": "png", "gif": "gif", "webp": "webp"}.get(ext, "jpeg")
+    return _extract_image(data, mime=mime)
+
+
+_EXTRACTORS: dict[str, Callable[[bytes, str], str]] = {
+    "pdf": _extract_pdf_dispatch,
+    "pptx": _extract_pptx_dispatch,
+    "md": _extract_plain,
+    "txt": _extract_plain,
+    "image": _extract_image_dispatch,
+}
+
+
 def _extract_image(data: bytes, mime: str = "jpeg") -> str:
     llm = get_llm()
     b64 = base64.b64encode(data).decode()
@@ -122,15 +150,7 @@ async def extract_text(document_id: str) -> str:
     client = get_storage_client()
     data: bytes = client.storage.from_(BUCKET).download(storage_path)
 
-    if file_type == "pdf":
-        return _extract_pdf(data)
-    elif file_type == "pptx":
-        return _extract_pptx(data)
-    elif file_type in ("md", "txt"):
-        return data.decode("utf-8", errors="replace")
-    elif file_type == "image":
-        ext = storage_path.rsplit(".", 1)[-1].lower() if "." in storage_path else "jpeg"
-        mime = {"jpg": "jpeg", "jpeg": "jpeg", "png": "png", "gif": "gif", "webp": "webp"}.get(ext, "jpeg")
-        return _extract_image(data, mime=mime)
-    else:
+    extractor = _EXTRACTORS.get(file_type)
+    if extractor is None:
         raise ValueError(f"Unsupported file type: {file_type}")
+    return extractor(data, storage_path)

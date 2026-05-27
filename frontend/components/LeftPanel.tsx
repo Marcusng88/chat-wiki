@@ -4,23 +4,12 @@ import { useCallback } from 'react'
 import { useAppStore, useActiveConflicts } from '@/store/useAppStore'
 import { useConfirm } from '@/lib/hooks/useConfirm'
 import { useDocuments } from '@/lib/hooks/useDocuments'
-import { presignDocument, uploadToStorage, confirmDocument, deleteDocument } from '@/lib/api'
-import type { Document, FileType } from '@/lib/types'
+import { useDocumentUpload } from '@/lib/hooks/useDocumentUpload'
+import { deleteDocument } from '@/lib/api'
 import MaterialRow from './MaterialRow'
 import UploadZone from './UploadZone'
 import DetailView from './DetailView'
 import { ChevronLeft, ChevronRight, Sparkle } from './Icons'
-
-function toFileType(filename: string): FileType {
-  const ext = (filename.split('.').pop() ?? '').toLowerCase()
-  if (ext === 'pdf' || ext === 'md' || ext === 'txt' || ext === 'pptx') return ext
-  if (ext === 'png' || ext === 'jpg' || ext === 'jpeg' || ext === 'webp') return 'img'
-  return 'txt'
-}
-
-function toApiFileType(ft: FileType): string {
-  return ft === 'img' ? 'image' : ft
-}
 
 export default function LeftPanel() {
   const {
@@ -36,59 +25,9 @@ export default function LeftPanel() {
   const activeConflicts = useActiveConflicts()
   const requestConfirm = useConfirm()
   const selectedDoc = documents.find((d) => d.id === selectedDocId)
+  const { upload: onUpload } = useDocumentUpload()
 
   useDocuments()
-
-  const onUpload = useCallback(
-    async (files: File[]) => {
-      for (const file of files) {
-        const fileType = toFileType(file.name)
-        const tempId = `tmp-${Date.now()}-${Math.random()}`
-        const optimistic: Document = {
-          id: tempId,
-          title: file.name,
-          fileType,
-          status: 'uploading',
-          progress: 0,
-          hasConflict: false,
-          pages: 1,
-          addedAt: 'just now',
-          size: file.size ? `${(file.size / 1024).toFixed(0)} KB` : '— KB',
-        }
-        setDocuments((prev) => [optimistic, ...prev])
-
-        try {
-          const { document_id, presigned_url } = await presignDocument(
-            file.name,
-            toApiFileType(fileType),
-            file.name,
-          )
-          setDocuments((prev) => prev.map((d) => d.id === tempId ? { ...d, id: document_id } : d))
-
-          await uploadToStorage(presigned_url, file, (pct) => {
-            setDocuments((prev) =>
-              prev.map((d) => d.id === document_id ? { ...d, progress: pct } : d)
-            )
-          })
-
-          await confirmDocument(document_id)
-          setDocuments((prev) =>
-            prev.map((d) => d.id === document_id ? { ...d, status: 'uploaded', progress: undefined } : d)
-          )
-        } catch (e) {
-          console.error('upload failed', e)
-          setDocuments((prev) =>
-            prev.map((d) =>
-              (d.id === tempId || d.id === file.name)
-                ? { ...d, status: 'failed', failReason: String(e) }
-                : d
-            )
-          )
-        }
-      }
-    },
-    [setDocuments]
-  )
 
   const onDelete = useCallback(
     async (id: string) => {

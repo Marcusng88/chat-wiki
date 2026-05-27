@@ -2,14 +2,21 @@ import { createClient } from './supabase'
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:8000'
 
-async function authHeaders(): Promise<Record<string, string>> {
+async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const supabase = createClient()
   const { data: { session } } = await supabase.auth.getSession()
   if (!session?.access_token) throw new Error('Not authenticated')
-  return {
-    Authorization: `Bearer ${session.access_token}`,
-    'Content-Type': 'application/json',
-  }
+  const res = await fetch(`${BACKEND}${path}`, {
+    ...init,
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${session.access_token}`,
+      ...init?.headers,
+    },
+  })
+  if (!res.ok) throw new Error(`${path} failed: ${res.status}`)
+  if (res.status === 204) return undefined as T
+  return res.json()
 }
 
 export interface DocumentResponse {
@@ -29,55 +36,31 @@ export interface PresignResponse {
   presigned_url: string
 }
 
-export async function listDocuments(): Promise<DocumentResponse[]> {
-  const headers = await authHeaders()
-  const res = await fetch(`${BACKEND}/documents`, { headers })
-  if (!res.ok) throw new Error(`listDocuments failed: ${res.status}`)
-  return res.json()
+export function listDocuments(): Promise<DocumentResponse[]> {
+  return apiFetch('/documents')
 }
 
-export async function presignDocument(
-  filename: string,
-  file_type: string,
-  title: string,
-): Promise<PresignResponse> {
-  const headers = await authHeaders()
-  const res = await fetch(`${BACKEND}/documents/presign`, {
+export function presignDocument(filename: string, file_type: string, title: string): Promise<PresignResponse> {
+  return apiFetch('/documents/presign', {
     method: 'POST',
-    headers,
     body: JSON.stringify({ filename, file_type, title }),
   })
-  if (!res.ok) throw new Error(`presign failed: ${res.status}`)
-  return res.json()
 }
 
-export async function confirmDocument(document_id: string): Promise<void> {
-  const headers = await authHeaders()
-  const res = await fetch(`${BACKEND}/documents/confirm`, {
+export function confirmDocument(document_id: string): Promise<void> {
+  return apiFetch('/documents/confirm', {
     method: 'POST',
-    headers,
     body: JSON.stringify({ document_id }),
   })
-  if (!res.ok) throw new Error(`confirm failed: ${res.status}`)
 }
 
 export async function getDocumentRaw(document_id: string): Promise<string> {
-  const headers = await authHeaders()
-  delete headers['Content-Type']
-  const res = await fetch(`${BACKEND}/documents/${document_id}/raw`, { headers })
-  if (!res.ok) throw new Error(`getDocumentRaw failed: ${res.status}`)
-  const data = await res.json()
-  return data.raw as string
+  const data = await apiFetch<{ raw: string }>(`/documents/${document_id}/raw`)
+  return data.raw
 }
 
-export async function deleteDocument(document_id: string): Promise<void> {
-  const headers = await authHeaders()
-  delete headers['Content-Type']
-  const res = await fetch(`${BACKEND}/documents/${document_id}`, {
-    method: 'DELETE',
-    headers,
-  })
-  if (!res.ok) throw new Error(`delete failed: ${res.status}`)
+export function deleteDocument(document_id: string): Promise<void> {
+  return apiFetch(`/documents/${document_id}`, { method: 'DELETE' })
 }
 
 export function uploadToStorage(
