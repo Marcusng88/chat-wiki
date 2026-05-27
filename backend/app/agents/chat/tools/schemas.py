@@ -7,8 +7,8 @@ class WikiCardData(BaseModel):
     title: str
     content: str
     topics: list[str]
-    doc_id: str
-    created_at: str
+    doc_id: str | None = None
+    created_at: str | None = None
 
 
 class SourceBlockData(BaseModel):

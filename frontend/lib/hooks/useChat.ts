@@ -8,6 +8,7 @@ import type { AgentMessage, A2UIMessage, HITLMessage } from '@/lib/types'
 
 interface A2UIBuffer {
   component?: string
+  agentMsgsBefore?: Set<string>
 }
 
 const CONFLICT_LABELS: Record<string, string> = {
@@ -23,6 +24,7 @@ function nowTs() {
 export function useChat() {
   const textBuf = useRef<Record<string, string>>({})
   const a2uiBuf = useRef<Record<string, A2UIBuffer>>({})
+  const suppressMsg = useRef<Set<string>>(new Set())
 
   const makeHandlers = useCallback(() => {
     return {
@@ -33,6 +35,11 @@ export function useChat() {
 
         switch (event.type) {
           case EventType.TEXT_MESSAGE_START: {
+            if (suppressMsg.current.has('next')) {
+              suppressMsg.current.delete('next')
+              suppressMsg.current.add(event.messageId)
+              break
+            }
             textBuf.current[event.messageId] = ''
             setMessages((m) => [
               ...m.filter((x) => x.role !== 'typing'),
@@ -47,12 +54,14 @@ export function useChat() {
             break
           }
           case EventType.TEXT_MESSAGE_CONTENT: {
+            if (suppressMsg.current.has(event.messageId)) break
             textBuf.current[event.messageId] =
               (textBuf.current[event.messageId] ?? '') + event.delta
             updateMessage(event.messageId, { md: textBuf.current[event.messageId] })
             break
           }
           case EventType.TEXT_MESSAGE_END: {
+            suppressMsg.current.delete(event.messageId)
             delete textBuf.current[event.messageId]
             break
           }
@@ -82,7 +91,10 @@ export function useChat() {
 
             if (val.createSurface) {
               const { surfaceId } = val.createSurface as { surfaceId: string }
-              a2uiBuf.current[surfaceId] = {}
+              const agentMsgsBefore = new Set(
+                useAppStore.getState().messages.filter((m) => m.role === 'agent').map((m) => m.id)
+              )
+              a2uiBuf.current[surfaceId] = { agentMsgsBefore }
             } else if (val.updateComponents) {
               const { surfaceId, components } = val.updateComponents as {
                 surfaceId: string
@@ -99,20 +111,31 @@ export function useChat() {
               }
               const buf = a2uiBuf.current[surfaceId]
               if (buf?.component) {
-                addMessage({
-                  id: 'a2ui-' + surfaceId,
-                  role: 'a2ui',
-                  ts: nowTs(),
-                  component: buf.component,
-                  data: value,
-                } satisfies A2UIMessage)
+                const before = buf.agentMsgsBefore
+                setMessages((msgs) => {
+                  const filtered = before
+                    ? msgs.filter((m) => m.role !== 'agent' || before.has(m.id))
+                    : msgs
+                  return [
+                    ...filtered,
+                    {
+                      id: 'a2ui-' + surfaceId,
+                      role: 'a2ui',
+                      ts: nowTs(),
+                      component: buf.component!,
+                      data: value,
+                    } satisfies A2UIMessage,
+                  ]
+                })
                 delete a2uiBuf.current[surfaceId]
+                suppressMsg.current.add('next')
               }
             }
             break
           }
           case EventType.RUN_FINISHED: {
             setMessages((m) => m.filter((x) => x.role !== 'typing'))
+            suppressMsg.current.clear()
             setIsStreaming(false)
             break
           }
@@ -127,6 +150,7 @@ export function useChat() {
                 sources: [],
               } satisfies AgentMessage,
             ])
+            suppressMsg.current.clear()
             setIsStreaming(false)
             break
           }
