@@ -119,4 +119,12 @@ export interface HITLMessage {
   recommend: string
 }
 
-export type Message = UserMessage | AgentMessage | TypingMessage | HITLMessage
+export interface A2UIMessage {
+  id: string
+  role: 'a2ui'
+  ts: string
+  component: string
+  data: Record<string, unknown>
+}
+
+export type Message = UserMessage | AgentMessage | TypingMessage | HITLMessage | A2UIMessage

@@ -4,6 +4,7 @@ import Markdown from './Markdown'
 import SourcePill from './SourcePill'
 import HITLCard from './HITLCard'
 import A2UICard from './A2UICard'
+import A2UIRenderer from './A2UIRenderer'
 import { Sparkle } from './Icons'
 
 export interface Suggestion {
@@ -41,6 +42,18 @@ export default function MessageItem({ msg, onOpenDoc, onResolveHitl, suggestions
           <span className="ts">retrieving…</span>
         </div>
         <div className="typing"><span /><span /><span /></div>
+      </div>
+    )
+  }
+
+  if (msg.role === 'a2ui') {
+    return (
+      <div className="msg-row agent">
+        <div className="who">
+          <span>agent</span>
+          <span className="ts">{msg.ts}</span>
+        </div>
+        <A2UIRenderer component={msg.component} data={msg.data} />
       </div>
     )
   }

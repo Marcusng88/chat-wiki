@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAppStore } from '@/store/useAppStore'
 import { useConfirm } from '@/lib/hooks/useConfirm'
+import { useChat } from '@/lib/hooks/useChat'
 import MessageItem from './MessageItem'
 import { Plus, Send } from './Icons'
 
@@ -14,14 +15,13 @@ const SUGGESTIONS = [
 export default function ChatPanel() {
   const {
     messages,
-    setMessages,
     documents,
     isStreaming,
-    setIsStreaming,
     clearMessages,
     openDocument,
     setLeftCollapsed,
   } = useAppStore()
+  const chat = useChat()
   const requestConfirm = useConfirm()
   const [input, setInput] = useState('')
   const taRef = useRef<HTMLTextAreaElement>(null)
@@ -48,36 +48,9 @@ export default function ChatPanel() {
   const send = useCallback((textOverride?: string) => {
     const text = (typeof textOverride === 'string' ? textOverride : input).trim()
     if (!text || isStreaming) return
-    const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    setMessages((m) => [
-      ...m,
-      { id: 'u' + Date.now(), role: 'user' as const, content: text, ts: now },
-      { id: 't' + Date.now(), role: 'typing' as const },
-    ])
     setInput('')
-    setIsStreaming(true)
-
-    setTimeout(() => {
-      setMessages((m) => {
-        const filtered = m.filter((x) => x.role !== 'typing')
-        const ready = documents.filter((d) => d.status === 'ready')
-        const first = ready[0] ?? documents[0]
-        const reply = {
-          id: 'a' + Date.now(),
-          role: 'agent' as const,
-          ts: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          md: first
-            ? `Based on your library, the most relevant material is **${first.title}** [[1]](#s1). Here's what I found:\n\n- Wiki page is *ready* and was last regenerated when you uploaded the file.\n- No conflicting claims with newer sources on this specific topic.\n- I can pull a deeper excerpt or open the raw source — just ask.`
-            : `I don't see any ready documents in your library yet. Upload some files and I'll be able to answer questions from them.`,
-          sources: first
-            ? [{ idx: 1, docId: first.id, name: first.title, loc: '§ 1', snippet: 'Most relevant section pulled from this document.' }]
-            : [],
-        }
-        return [...filtered, reply]
-      })
-      setIsStreaming(false)
-    }, 1600)
-  }, [input, isStreaming, setMessages, setIsStreaming, documents])
+    chat.send(text)
+  }, [input, isStreaming, chat])
 
   const handleNewChat = useCallback(async () => {
     const ok = await requestConfirm({
