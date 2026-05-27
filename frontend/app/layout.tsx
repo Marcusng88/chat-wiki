@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { Syne, DM_Mono } from 'next/font/google'
 import './globals.css'
+import 'katex/dist/katex.min.css'
+import 'highlight.js/styles/github-dark.css'
 
 const syne = Syne({
   variable: '--font-syne',

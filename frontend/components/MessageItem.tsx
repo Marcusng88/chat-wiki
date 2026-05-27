@@ -3,7 +3,7 @@ import type { Message, MessageSource } from '@/lib/types'
 import Markdown from './Markdown'
 import SourcePill from './SourcePill'
 import HITLCard from './HITLCard'
-import A2UICard from './A2UICard'
+import A2UIRenderer from './A2UIRenderer'
 import { Sparkle } from './Icons'
 
 export interface Suggestion {
@@ -14,11 +14,12 @@ export interface Suggestion {
 interface Props {
   msg: Message
   onOpenDoc?: (docId: string) => void
-  onResolveHitl?: (choice: string) => void
+  onResolveHitl?: (choice: string, notes?: string) => void
+  onQuery?: (text: string) => void
   suggestions?: Suggestion[] | null
 }
 
-export default function MessageItem({ msg, onOpenDoc, onResolveHitl, suggestions }: Props) {
+export default function MessageItem({ msg, onOpenDoc, onResolveHitl, onQuery, suggestions }: Props) {
   const openDoc = onOpenDoc ?? (() => {})
 
   if (msg.role === 'user') {
@@ -41,6 +42,18 @@ export default function MessageItem({ msg, onOpenDoc, onResolveHitl, suggestions
           <span className="ts">retrieving…</span>
         </div>
         <div className="typing"><span /><span /><span /></div>
+      </div>
+    )
+  }
+
+  if (msg.role === 'a2ui') {
+    return (
+      <div className="msg-row agent">
+        <div className="who">
+          <span>agent</span>
+          <span className="ts">{msg.ts}</span>
+        </div>
+        <A2UIRenderer component={msg.component} data={msg.data} onOpenDoc={onOpenDoc} onQuery={onQuery} />
       </div>
     )
   }
@@ -75,8 +88,7 @@ export default function MessageItem({ msg, onOpenDoc, onResolveHitl, suggestions
           }}
           sources={msg.sources}
         />
-        {msg.a2ui && <A2UICard payload={msg.a2ui} />}
-        {msg.sources && msg.sources.length > 0 && (
+{msg.sources && msg.sources.length > 0 && (
           <div className="sources-row">
             <span className="sources-label">sources</span>
             {msg.sources.map((s) => (

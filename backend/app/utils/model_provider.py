@@ -1,11 +1,21 @@
+from deepagents import HarnessProfile, register_harness_profile
 from langchain.chat_models import init_chat_model
 from langchain_openai import OpenAIEmbeddings
 from app.utils.config import settings
 
+_LLM_MODEL = "openai:gpt-5.4-mini-2026-03-17"
+
+register_harness_profile(
+    _LLM_MODEL,
+    HarnessProfile(
+        excluded_tools=frozenset({"ls", "read_file", "write_file", "edit_file", "glob", "grep"}),
+    ),
+)
+
 
 def get_llm(temperature: float = 0.0):
     return init_chat_model(
-        "openai:gpt-5.4-nano-2026-03-17",
+        _LLM_MODEL,
         temperature=temperature,
         api_key=settings.openai_api_key,
     )

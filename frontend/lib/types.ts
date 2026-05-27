@@ -70,21 +70,8 @@ export interface MessageSource {
 
 export interface HITLSource {
   id: string
-  role: string
   name: string
   date: string
-  claim: string
-}
-
-export interface A2UIRow {
-  k: string
-  v: string
-}
-
-export interface A2UIPayload {
-  schema: string
-  title: string
-  rows: A2UIRow[]
 }
 
 export interface UserMessage {
@@ -100,7 +87,6 @@ export interface AgentMessage {
   ts: string
   md: string
   sources?: MessageSource[]
-  a2ui?: A2UIPayload
 }
 
 export interface TypingMessage {
@@ -119,4 +105,12 @@ export interface HITLMessage {
   recommend: string
 }
 
-export type Message = UserMessage | AgentMessage | TypingMessage | HITLMessage
+export interface A2UIMessage {
+  id: string
+  role: 'a2ui'
+  ts: string
+  component: string
+  data: Record<string, unknown>
+}
+
+export type Message = UserMessage | AgentMessage | TypingMessage | HITLMessage | A2UIMessage

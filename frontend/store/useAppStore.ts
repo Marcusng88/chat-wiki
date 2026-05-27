@@ -2,6 +2,7 @@
 
 import { create } from 'zustand'
 import { useShallow } from 'zustand/react/shallow'
+import { createClient } from '@/lib/supabase'
 import type { Document, Message } from '@/lib/types'
 
 interface AppState {
@@ -13,6 +14,7 @@ interface AppState {
   selectedDocId: string | null
   isStreaming: boolean
   isMobileDrawerOpen: boolean
+  pendingHITL: boolean
 }
 
 interface AppActions {
@@ -20,13 +22,14 @@ interface AppActions {
   setMessages: (msgs: Message[] | ((prev: Message[]) => Message[])) => void
   addMessage: (msg: Message) => void
   updateMessage: (id: string, patch: Partial<Message>) => void
-  clearMessages: (newThreadId: string) => void
+  clearMessages: () => Promise<void>
   setThreadId: (id: string | null) => void
   setLeftCollapsed: (value: boolean | ((prev: boolean) => boolean)) => void
   setLeftPanelView: (view: 'list' | 'detail') => void
   setSelectedDocId: (id: string | null) => void
   setIsStreaming: (value: boolean) => void
   setMobileDrawerOpen: (value: boolean) => void
+  setPendingHITL: (value: boolean) => void
   openDocument: (id: string) => void
   backToList: () => void
 }
@@ -40,6 +43,7 @@ const initialState: AppState = {
   selectedDocId: null,
   isStreaming: false,
   isMobileDrawerOpen: false,
+  pendingHITL: false,
 }
 
 export const useAppStore = create<AppState & AppActions>()((set) => ({
@@ -59,8 +63,12 @@ export const useAppStore = create<AppState & AppActions>()((set) => ({
       messages: s.messages.map((m) => (m.id === id ? { ...m, ...patch } as Message : m)),
     })),
 
-  clearMessages: (newThreadId) =>
-    set({ messages: [], threadId: newThreadId }),
+  clearMessages: async () => {
+    const supabase = createClient()
+    const { data: { session } } = await supabase.auth.getSession()
+    const userId = session?.user?.id ?? 'anon'
+    set({ messages: [], threadId: `${userId}-${Date.now()}` })
+  },
 
   setThreadId: (id) => set({ threadId: id }),
 
@@ -78,6 +86,8 @@ export const useAppStore = create<AppState & AppActions>()((set) => ({
   setIsStreaming: (value) => set({ isStreaming: value }),
 
   setMobileDrawerOpen: (value) => set({ isMobileDrawerOpen: value }),
+
+  setPendingHITL: (value) => set({ pendingHITL: value }),
 
   openDocument: (id) =>
     set({ leftPanelView: 'detail', selectedDocId: id, isMobileDrawerOpen: false }),
