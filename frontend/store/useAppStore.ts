@@ -13,6 +13,7 @@ interface AppState {
   selectedDocId: string | null
   isStreaming: boolean
   isMobileDrawerOpen: boolean
+  pendingHITL: boolean
 }
 
 interface AppActions {
@@ -27,6 +28,7 @@ interface AppActions {
   setSelectedDocId: (id: string | null) => void
   setIsStreaming: (value: boolean) => void
   setMobileDrawerOpen: (value: boolean) => void
+  setPendingHITL: (value: boolean) => void
   openDocument: (id: string) => void
   backToList: () => void
 }
@@ -40,6 +42,7 @@ const initialState: AppState = {
   selectedDocId: null,
   isStreaming: false,
   isMobileDrawerOpen: false,
+  pendingHITL: false,
 }
 
 export const useAppStore = create<AppState & AppActions>()((set) => ({
@@ -78,6 +81,8 @@ export const useAppStore = create<AppState & AppActions>()((set) => ({
   setIsStreaming: (value) => set({ isStreaming: value }),
 
   setMobileDrawerOpen: (value) => set({ isMobileDrawerOpen: value }),
+
+  setPendingHITL: (value) => set({ pendingHITL: value }),
 
   openDocument: (id) =>
     set({ leftPanelView: 'detail', selectedDocId: id, isMobileDrawerOpen: false }),

@@ -17,6 +17,7 @@ export default function ChatPanel() {
     messages,
     documents,
     isStreaming,
+    pendingHITL,
     clearMessages,
     openDocument,
     setLeftCollapsed,
@@ -47,10 +48,20 @@ export default function ChatPanel() {
 
   const send = useCallback((textOverride?: string) => {
     const text = (typeof textOverride === 'string' ? textOverride : input).trim()
-    if (!text || isStreaming) return
+    if (!text || isStreaming || pendingHITL) return
     setInput('')
     chat.send(text)
-  }, [input, isStreaming, chat])
+  }, [input, isStreaming, pendingHITL, chat])
+
+  const resolveHITL = useCallback((choice: string, notes?: string) => {
+    if (choice === 'reject') {
+      chat.resolveHITL('reject')
+    } else if (choice === 'modify') {
+      chat.resolveHITL('modify', undefined, notes)
+    } else {
+      chat.resolveHITL('approve', choice)
+    }
+  }, [chat])
 
   const handleNewChat = useCallback(async () => {
     const ok = await requestConfirm({
@@ -88,7 +99,8 @@ export default function ChatPanel() {
               key={m.id}
               msg={m}
               onOpenDoc={openDoc}
-              onResolveHitl={() => {}}
+              onResolveHitl={resolveHITL}
+              onQuery={send}
               suggestions={isLastAgent ? SUGGESTIONS.map((s) => ({ text: s, onPick: send })) : null}
             />
           )
@@ -96,7 +108,7 @@ export default function ChatPanel() {
       </div>
 
       <div className="chat-input-wrap">
-        <div className={`chat-input${isStreaming ? ' disabled' : ''}`}>
+        <div className={`chat-input${isStreaming || pendingHITL ? ' disabled' : ''}`}>
           <textarea
             ref={taRef}
             value={input}
@@ -104,7 +116,7 @@ export default function ChatPanel() {
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() }
             }}
-            placeholder={isStreaming ? 'agent is responding…' : 'ask about your knowledge — enter to send, shift+enter newline'}
+            placeholder={isStreaming ? 'agent is responding…' : pendingHITL ? 'resolve the conflict card above to continue…' : 'ask about your knowledge — enter to send, shift+enter newline'}
             rows={1}
           />
           <div className="chat-input-bottom">
@@ -116,7 +128,7 @@ export default function ChatPanel() {
             <button
               className="send"
               onClick={() => send()}
-              disabled={!input.trim() || isStreaming}
+              disabled={!input.trim() || isStreaming || pendingHITL}
               aria-label="Send"
             >
               <Send />

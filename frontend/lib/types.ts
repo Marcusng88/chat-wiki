@@ -70,10 +70,8 @@ export interface MessageSource {
 
 export interface HITLSource {
   id: string
-  role: string
   name: string
   date: string
-  claim: string
 }
 
 export interface A2UIRow {

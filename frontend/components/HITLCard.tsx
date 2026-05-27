@@ -6,12 +6,14 @@ import Markdown from './Markdown'
 
 interface Props {
   msg: HITLMessage
-  onResolve?: (choice: string) => void
+  onResolve?: (choice: string, notes?: string) => void
 }
 
 export default function HITLCard({ msg, onResolve }: Props) {
   const [picked, setPicked] = useState(msg.sources[0]?.id ?? '')
   const [done, setDone] = useState(false)
+  const [showNoteInput, setShowNoteInput] = useState(false)
+  const [note, setNote] = useState('')
 
   if (!msg.sources?.length) return null
 
@@ -46,7 +48,6 @@ export default function HITLCard({ msg, onResolve }: Props) {
         <span className="req-id">paused</span>
       </div>
       <div className="hitl-body">
-        <div className="hitl-explanation">{msg.explanation}</div>
         <div className="hitl-sources">
           {msg.sources.map((s) => (
             <div
@@ -54,12 +55,8 @@ export default function HITLCard({ msg, onResolve }: Props) {
               className={`hitl-source${picked === s.id ? ' selected' : ''}`}
               onClick={() => setPicked(s.id)}
             >
-              <span className="role">{s.role}</span>
               <span className="name">{s.name}</span>
               <span className="date">{s.date}</span>
-              <span style={{ fontSize: 10, color: 'var(--text-secondary)', marginTop: 4, fontStyle: 'normal' }}>
-                claims: &ldquo;{s.claim}&rdquo;
-              </span>
               <span className="check"><Check /></span>
             </div>
           ))}
@@ -67,20 +64,45 @@ export default function HITLCard({ msg, onResolve }: Props) {
         <div className="hitl-recommend">
           <Markdown md={`**Recommendation —** ${msg.recommend}`} onCite={() => {}} />
         </div>
-        <div className="hitl-actions">
-          <button
-            className="hitl-btn primary"
-            onClick={() => { setDone(true); onResolve?.(picked) }}
-          >
-            <Check /> Use this one
-          </button>
-          <button className="hitl-btn" onClick={() => { setDone(true); onResolve?.('modify') }}>
-            Change something
-          </button>
-          <button className="hitl-btn danger" onClick={() => { setDone(true); onResolve?.('reject') }}>
-            Skip
-          </button>
-        </div>
+        {showNoteInput ? (
+          <div className="hitl-note-wrap">
+            <textarea
+              className="hitl-note-input"
+              placeholder="Describe what you'd like changed…"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              rows={3}
+              autoFocus
+            />
+            <div className="hitl-actions">
+              <button
+                className="hitl-btn primary"
+                disabled={!note.trim()}
+                onClick={() => { setDone(true); onResolve?.('modify', note.trim()) }}
+              >
+                Send note
+              </button>
+              <button className="hitl-btn" onClick={() => setShowNoteInput(false)}>
+                Back
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="hitl-actions">
+            <button
+              className="hitl-btn primary"
+              onClick={() => { setDone(true); onResolve?.(picked) }}
+            >
+              <Check /> Use this one
+            </button>
+            <button className="hitl-btn" onClick={() => setShowNoteInput(true)}>
+              Change something
+            </button>
+            <button className="hitl-btn danger" onClick={() => { setDone(true); onResolve?.('reject') }}>
+              Skip
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

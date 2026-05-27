@@ -15,11 +15,12 @@ export interface Suggestion {
 interface Props {
   msg: Message
   onOpenDoc?: (docId: string) => void
-  onResolveHitl?: (choice: string) => void
+  onResolveHitl?: (choice: string, notes?: string) => void
+  onQuery?: (text: string) => void
   suggestions?: Suggestion[] | null
 }
 
-export default function MessageItem({ msg, onOpenDoc, onResolveHitl, suggestions }: Props) {
+export default function MessageItem({ msg, onOpenDoc, onResolveHitl, onQuery, suggestions }: Props) {
   const openDoc = onOpenDoc ?? (() => {})
 
   if (msg.role === 'user') {
@@ -53,7 +54,7 @@ export default function MessageItem({ msg, onOpenDoc, onResolveHitl, suggestions
           <span>agent</span>
           <span className="ts">{msg.ts}</span>
         </div>
-        <A2UIRenderer component={msg.component} data={msg.data} />
+        <A2UIRenderer component={msg.component} data={msg.data} onOpenDoc={onOpenDoc} onQuery={onQuery} />
       </div>
     )
   }
