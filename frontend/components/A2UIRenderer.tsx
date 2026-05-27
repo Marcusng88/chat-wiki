@@ -28,7 +28,7 @@ function WikiCardView({ data, onOpenDoc }: { data: Record<string, unknown>; onOp
         <div className="wiki-card-body">{data.content as string}</div>
         {topics.length > 0 && (
           <div className="wiki-card-topics">
-            {topics.map((t) => <span key={t} className="wiki-card-topic">{t}</span>)}
+            {topics.map((t, i) => <span key={`${t}-${i}`} className="wiki-card-topic">{t}</span>)}
           </div>
         )}
       </div>
@@ -132,9 +132,9 @@ function TopicMapView({ data, onQuery }: { data: Record<string, unknown>; onQuer
       <div className="a2ui-head"><span>topics</span></div>
       <div className="a2ui-body">
         <div className="tm-cloud">
-          {topics.map((t) => (
+          {topics.map((t, i) => (
             <span
-              key={t.label}
+              key={`${t.label}-${i}`}
               className={`tm-chip${onQuery ? ' tm-clickable' : ''}${t.label === highlighted ? ' tm-hl' : ''}`}
               onClick={() => onQuery?.(`show me documents about ${t.label}`)}
             >
