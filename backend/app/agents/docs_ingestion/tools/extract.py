@@ -129,6 +129,8 @@ async def extract_text(document_id: str) -> str:
     elif file_type in ("md", "txt"):
         return data.decode("utf-8", errors="replace")
     elif file_type == "image":
-        return _extract_image(data)
+        ext = storage_path.rsplit(".", 1)[-1].lower() if "." in storage_path else "jpeg"
+        mime = {"jpg": "jpeg", "jpeg": "jpeg", "png": "png", "gif": "gif", "webp": "webp"}.get(ext, "jpeg")
+        return _extract_image(data, mime=mime)
     else:
         raise ValueError(f"Unsupported file type: {file_type}")

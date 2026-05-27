@@ -142,7 +142,7 @@ User Query → Main Agent → Index Lookup → Candidate Wiki Pages
 
 ## Database Schema (Supabase Postgres)
 
-Key tables: `users`, `documents`, `chunks`, `embeddings`, `index_entries`, `conflicts`, `conflict_documents`, `conflict_history`, `hitl_requests`
+Key tables: `documents` (summary + topics[] = index), `chunks`, `conflicts`, `conflict_documents`
 
 `documents.status` drives queryability — always check before retrieval.
 

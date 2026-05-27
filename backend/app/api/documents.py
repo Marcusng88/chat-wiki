@@ -10,8 +10,6 @@ from app.utils.auth import get_user_id
 
 router = APIRouter(prefix="/documents", tags=["documents"])
 
-SUPPORTED_TYPES = {"pdf", "md", "txt", "pptx", "image"}
-
 
 @router.post("/presign", response_model=PresignResponse)
 async def presign(req: PresignRequest, user_id: str = Depends(get_user_id)):
