@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 import { useAppStore } from '@/store/useAppStore'
 import { createClient } from '@/lib/supabase'
-import { listDocuments } from '@/lib/api'
+import { listDocuments, DocumentResponse } from '@/lib/api'
 import type { Document, DocumentStatus, FileType } from '@/lib/types'
 
 function toFileType(fileType: string): FileType {
@@ -61,8 +61,7 @@ export function useDocuments() {
           setDocuments((prev) => {
             const exists = prev.some((d) => d.id === row.id)
             if (!exists) {
-              // INSERT from another tab or page reload race — add it
-              return [rowToDocument(row as Parameters<typeof rowToDocument>[0]), ...prev]
+              return [rowToDocument(row as unknown as DocumentResponse), ...prev]
             }
             return prev.map((d) =>
               d.id === row.id
