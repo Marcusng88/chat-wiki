@@ -72,7 +72,7 @@ async def list_documents(user_id: str = Depends(get_user_id)):
                     d.status,
                     d.wiki_page,
                     d.summary,
-                    d.topics,
+                    COALESCE(d.topics, '{}') AS topics,
                     d.created_at,
                     EXISTS(
                         SELECT 1 FROM conflict_documents cd

@@ -129,9 +129,9 @@ export default function MaterialRow({ doc, active = false, onClick, onDelete, co
         <div className="title" title={doc.title}>{doc.title}</div>
         <div className="sub">
           {isBusy
-            ? <span className="busy">{doc.status.replace(/_/g, ' ')} · {Math.round(doc.progress!)}%</span>
+            ? <span className="busy">uploading · {Math.round(doc.progress!)}%</span>
             : PROCESSING_STATUSES.has(doc.status)
-              ? <span className="busy">{doc.status.replace(/_/g, ' ')}</span>
+              ? <span className="busy"><span className="spinner" aria-hidden="true" /> processing…</span>
               : <span>{doc.addedAt}</span>
           }
         </div>

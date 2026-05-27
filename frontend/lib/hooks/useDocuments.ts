@@ -2,9 +2,13 @@
 
 import { useEffect } from 'react'
 import { useAppStore } from '@/store/useAppStore'
-import { createClient } from '@/lib/supabase'
 import { listDocuments, DocumentResponse } from '@/lib/api'
 import type { Document, DocumentStatus, FileType } from '@/lib/types'
+
+const PROCESSING_STATUSES = new Set([
+  'uploaded', 'extracting', 'chunking', 'embedding',
+  'generating_wiki', 'indexing', 'conflict_scan',
+])
 
 function toFileType(fileType: string): FileType {
   if (fileType === 'pdf' || fileType === 'md' || fileType === 'txt' || fileType === 'pptx') return fileType
@@ -12,7 +16,7 @@ function toFileType(fileType: string): FileType {
   return 'txt'
 }
 
-function rowToDocument(r: Awaited<ReturnType<typeof listDocuments>>[number]): Document {
+export function rowToDocument(r: Awaited<ReturnType<typeof listDocuments>>[number]): Document {
   return {
     id: r.id,
     title: r.title,
@@ -29,59 +33,28 @@ function rowToDocument(r: Awaited<ReturnType<typeof listDocuments>>[number]): Do
 }
 
 export function useDocuments() {
-  const { setDocuments } = useAppStore()
+  const setDocuments = useAppStore((s) => s.setDocuments)
+  const documents = useAppStore((s) => s.documents)
 
+  // Initial fetch
   useEffect(() => {
     let cancelled = false
-
-    async function fetchDocs() {
-      try {
-        const rows = await listDocuments()
-        if (cancelled) return
-        setDocuments(rows.map(rowToDocument))
-      } catch (e) {
-        console.error('useDocuments fetch failed', e)
-      }
-    }
-
-    fetchDocs()
-
-    const supabase = createClient()
-    const channel = supabase
-      .channel('documents-realtime')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'documents' },
-        (payload) => {
-          if (payload.eventType === 'DELETE') {
-            setDocuments((prev) => prev.filter((d) => d.id !== (payload.old as { id: string }).id))
-            return
-          }
-          const row = payload.new as Record<string, unknown>
-          setDocuments((prev) => {
-            const exists = prev.some((d) => d.id === row.id)
-            if (!exists) {
-              return [rowToDocument(row as unknown as DocumentResponse), ...prev]
-            }
-            return prev.map((d) =>
-              d.id === row.id
-                ? {
-                    ...d,
-                    status: row.status as DocumentStatus,
-                    wikiPage: (row.wiki_page as string | null) ?? d.wikiPage,
-                    summary: (row.summary as string | null) ?? d.summary,
-                    topics: Array.isArray(row.topics) && row.topics.length > 0 ? row.topics as string[] : d.topics,
-                  }
-                : d
-            )
-          })
-        }
-      )
-      .subscribe()
-
-    return () => {
-      cancelled = true
-      supabase.removeChannel(channel)
-    }
+    listDocuments()
+      .then((rows) => { if (!cancelled) setDocuments(rows.map(rowToDocument)) })
+      .catch((e) => console.error('useDocuments fetch failed', e))
+    return () => { cancelled = true }
   }, [setDocuments])
+
+  // Poll every 3s while any doc is processing; stops when all terminal
+  useEffect(() => {
+    const anyProcessing = documents.some((d) => PROCESSING_STATUSES.has(d.status))
+    if (!anyProcessing) return
+    let cancelled = false
+    const id = setInterval(() => {
+      listDocuments()
+        .then((rows) => { if (!cancelled) setDocuments(rows.map(rowToDocument)) })
+        .catch((e) => console.error('useDocuments poll failed', e))
+    }, 3000)
+    return () => { cancelled = true; clearInterval(id) }
+  }, [documents, setDocuments])
 }
