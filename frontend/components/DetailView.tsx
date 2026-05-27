@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import type { Document } from '@/lib/types'
 import { Back } from './Icons'
 
@@ -15,8 +15,6 @@ interface Props {
 
 export default function DetailView({ doc, onBack }: Props) {
   const [tab, setTab] = useState<'wiki' | 'raw' | 'meta'>('wiki')
-
-  useEffect(() => { setTab('wiki') }, [doc.id])
 
   return (
     <div className="detail-view">
@@ -63,7 +61,9 @@ export default function DetailView({ doc, onBack }: Props) {
         )}
         {tab === 'wiki' && !doc.wiki && (
           <div className="empty">
-            {doc.status === 'failed' ? 'Wiki not generated — ingestion failed.' : 'Wiki generation in progress…'}
+            {(doc.status.startsWith('failed_') || doc.status === 'failed' || doc.status === 'unsupported')
+              ? 'Wiki not generated — ingestion failed.'
+              : 'Wiki generation in progress…'}
           </div>
         )}
         {tab === 'raw' && (

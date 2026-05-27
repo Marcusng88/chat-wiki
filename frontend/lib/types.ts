@@ -1,6 +1,21 @@
 export type FileType = 'pdf' | 'md' | 'txt' | 'pptx' | 'img'
-export type DocumentStatus = 'uploading' | 'processing' | 'ready' | 'failed'
-export type ProcessingStage = 'extracting' | 'chunking' | 'generating_wiki' | 'indexing'
+
+export type DocumentStatus =
+  | 'uploading'          // frontend-only: XHR PUT in progress
+  | 'uploaded'           // in DB, ingestion not started
+  | 'extracting'
+  | 'chunking'
+  | 'embedding'
+  | 'generating_wiki'
+  | 'indexing'
+  | 'conflict_scan'
+  | 'ready'
+  | 'failed_extraction'
+  | 'failed_embedding'
+  | 'failed_wiki'
+  | 'failed_indexing'
+  | 'unsupported'
+  | 'failed'             // frontend-only: upload error before DB record created
 
 export interface WikiEntity {
   kind: string
@@ -26,7 +41,6 @@ export interface Document {
   wiki?: WikiContent
   raw?: string
   progress?: number
-  stage?: ProcessingStage
   failReason?: string
 }
 
