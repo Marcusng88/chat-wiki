@@ -25,7 +25,8 @@ export default function Home() {
   useEffect(() => {
     setDocuments(DEV_DOCS)
     DEV_MESSAGES.forEach(addMessage)
-  }, [setDocuments, addMessage])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return <TwoPanelShell />
 }

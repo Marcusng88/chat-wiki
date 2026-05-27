@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import type { Document } from '@/lib/types'
-import { FileIcon, Alert, More, Eye, Upload, Sparkle, Trash } from './Icons'
+import { FileIcon, Alert, More, Eye, Trash } from './Icons'
 
 const FILE_ICON_CLASS: Record<string, string> = {
   pdf: 'ftype-pdf',
@@ -52,7 +52,7 @@ export default function MaterialRow({ doc, active = false, onClick, onDelete, co
     function close(e: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false)
     }
-    setTimeout(() => document.addEventListener('mousedown', close), 0)
+    document.addEventListener('mousedown', close)
     return () => document.removeEventListener('mousedown', close)
   }, [menuOpen])
 
@@ -140,12 +140,6 @@ export default function MaterialRow({ doc, active = false, onClick, onDelete, co
           <div className="row-menu" onClick={(e) => e.stopPropagation()}>
             <button onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onClick?.(doc.id) }}>
               <Eye /><span>Open</span>
-            </button>
-            <button onClick={(e) => e.stopPropagation()}>
-              <Upload style={{ transform: 'rotate(180deg)' }} /><span>Download</span>
-            </button>
-            <button onClick={(e) => e.stopPropagation()}>
-              <Sparkle /><span>Re-ingest</span>
             </button>
             <div className="row-menu-sep" />
             <button className="danger" onClick={handleDelete}>

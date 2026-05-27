@@ -10,8 +10,10 @@ interface Props {
 }
 
 export default function HITLCard({ msg, onResolve }: Props) {
-  const [picked, setPicked] = useState(msg.sources[0].id)
+  const [picked, setPicked] = useState(msg.sources[0]?.id ?? '')
   const [done, setDone] = useState(false)
+
+  if (!msg.sources?.length) return null
 
   if (done) {
     const pickedSrc = msg.sources.find((s) => s.id === picked)

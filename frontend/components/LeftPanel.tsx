@@ -40,7 +40,7 @@ export default function LeftPanel() {
           if (d.status === 'processing' && typeof d.progress === 'number' && d.progress < 99) {
             const next = Math.min(99, d.progress + Math.random() * 3)
             const stage: ProcessingStage =
-              next > 30 && next < 60 ? 'chunking' : next < 80 ? 'generating_wiki' : 'indexing'
+              next < 30 ? 'extracting' : next < 60 ? 'chunking' : next < 85 ? 'generating_wiki' : 'indexing'
             return { ...d, progress: next, stage }
           }
           if (d.status === 'uploading' && typeof d.progress === 'number') {
