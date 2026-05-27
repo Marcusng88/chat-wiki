@@ -7,6 +7,7 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("watchfiles").setLevel(logging.WARNING)
 from fastapi.middleware.cors import CORSMiddleware
 from app.db.db import init_pool, close_pool
+from app.api.chat import router as chat_router
 from app.api.documents import router as documents_router
 
 
@@ -28,6 +29,7 @@ app.add_middleware(
 )
 
 app.include_router(documents_router)
+app.include_router(chat_router)
 
 
 @app.get("/health")
