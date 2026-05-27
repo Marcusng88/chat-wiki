@@ -60,9 +60,20 @@ export function useDocuments() {
           const row = payload.new as Record<string, unknown>
           setDocuments((prev) => {
             const exists = prev.some((d) => d.id === row.id)
-            if (!exists) return prev
+            if (!exists) {
+              // INSERT from another tab or page reload race — add it
+              return [rowToDocument(row as Parameters<typeof rowToDocument>[0]), ...prev]
+            }
             return prev.map((d) =>
-              d.id === row.id ? { ...d, status: row.status as DocumentStatus } : d
+              d.id === row.id
+                ? {
+                    ...d,
+                    status: row.status as DocumentStatus,
+                    wikiPage: (row.wiki_page as string | null) ?? d.wikiPage,
+                    summary: (row.summary as string | null) ?? d.summary,
+                    topics: Array.isArray(row.topics) && row.topics.length > 0 ? row.topics as string[] : d.topics,
+                  }
+                : d
             )
           })
         }

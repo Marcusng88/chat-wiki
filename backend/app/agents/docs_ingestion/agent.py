@@ -48,4 +48,5 @@ def build_document_processor_agent():
         middleware=middleware,
         checkpointer=None,
         name="document-processor",
+        debug=True,
     )

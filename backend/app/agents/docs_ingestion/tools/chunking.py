@@ -37,26 +37,41 @@ async def chunk_and_embed(document_id: str, text: str) -> int:
     Raises:
         RuntimeError: On database write failure.
     """
+    logger.info("[chunk_and_embed] doc=%s text_len=%d", document_id, len(text))
+
     chunks = _splitter.split_text(text)
+    logger.info("[chunk_and_embed] doc=%s chunks=%d", document_id, len(chunks))
     if not chunks:
-        logger.warning("No chunks produced for document %s", document_id)
+        logger.warning("[chunk_and_embed] doc=%s no chunks produced", document_id)
         return 0
 
     embeddings_model = get_embeddings()
-    vectors = await embeddings_model.aembed_documents(chunks)
+    logger.info("[chunk_and_embed] doc=%s embedding %d chunks via %s", document_id, len(chunks), EMBEDDING_MODEL)
+    try:
+        vectors = await embeddings_model.aembed_documents(chunks)
+    except Exception:
+        logger.exception("[chunk_and_embed] doc=%s embedding API call failed", document_id)
+        raise
+    logger.info("[chunk_and_embed] doc=%s got %d vectors", document_id, len(vectors))
 
-    async with get_conn() as conn:
-        async with conn.cursor(row_factory=dict_row) as cur:
-            await cur.execute("DELETE FROM chunks WHERE document_id = %s", (document_id,))
+    try:
+        async with get_conn() as conn:
+            async with conn.cursor(row_factory=dict_row) as cur:
+                await cur.execute("DELETE FROM chunks WHERE document_id = %s", (document_id,))
+                logger.info("[chunk_and_embed] doc=%s old chunks deleted", document_id)
 
-            for idx, (chunk_text, vector) in enumerate(zip(chunks, vectors)):
-                await cur.execute(
-                    """
-                    INSERT INTO chunks (document_id, chunk_index, content, embedding, embedding_model)
-                    VALUES (%s, %s, %s, %s::vector, %s)
-                    """,
-                    (document_id, idx, chunk_text, str(vector), EMBEDDING_MODEL),
-                )
+                for idx, (chunk_text, vector) in enumerate(zip(chunks, vectors)):
+                    await cur.execute(
+                        """
+                        INSERT INTO chunks (document_id, chunk_index, content, embedding, embedding_model)
+                        VALUES (%s, %s, %s, %s::vector, %s)
+                        """,
+                        (document_id, idx, chunk_text, str(vector), EMBEDDING_MODEL),
+                    )
+                logger.info("[chunk_and_embed] doc=%s inserted %d rows", document_id, len(chunks))
+    except Exception:
+        logger.exception("[chunk_and_embed] doc=%s DB write failed", document_id)
+        raise
 
-    logger.info("Stored %d chunks for document %s", len(chunks), document_id)
+    logger.info("[chunk_and_embed] doc=%s complete, stored %d chunks", document_id, len(chunks))
     return len(chunks)
