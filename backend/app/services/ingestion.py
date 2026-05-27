@@ -1,4 +1,7 @@
 import logging
+from langchain_core.messages import HumanMessage
+
+from app.agents.docs_ingestion.agent import build_document_processor_agent
 
 logger = logging.getLogger(__name__)
 
@@ -11,5 +14,11 @@ async def run_ingestion(document_id: str, file_type: str) -> None:
         return
 
     logger.info("Ingestion started for document %s", document_id)
-    # Document Processor DeepAgent invoked here in next phase
+
+    agent = build_document_processor_agent()
+    await agent.ainvoke(
+        {"messages": [HumanMessage(content=f"Process document_id={document_id}")]},
+        config={"recursion_limit": 100},
+    )
+
     logger.info("Ingestion complete for document %s", document_id)
