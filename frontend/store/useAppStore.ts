@@ -2,6 +2,7 @@
 
 import { create } from 'zustand'
 import { useShallow } from 'zustand/react/shallow'
+import { createClient } from '@/lib/supabase'
 import type { Document, Message } from '@/lib/types'
 
 interface AppState {
@@ -21,7 +22,7 @@ interface AppActions {
   setMessages: (msgs: Message[] | ((prev: Message[]) => Message[])) => void
   addMessage: (msg: Message) => void
   updateMessage: (id: string, patch: Partial<Message>) => void
-  clearMessages: (newThreadId: string) => void
+  clearMessages: () => Promise<void>
   setThreadId: (id: string | null) => void
   setLeftCollapsed: (value: boolean | ((prev: boolean) => boolean)) => void
   setLeftPanelView: (view: 'list' | 'detail') => void
@@ -62,8 +63,12 @@ export const useAppStore = create<AppState & AppActions>()((set) => ({
       messages: s.messages.map((m) => (m.id === id ? { ...m, ...patch } as Message : m)),
     })),
 
-  clearMessages: (newThreadId) =>
-    set({ messages: [], threadId: newThreadId }),
+  clearMessages: async () => {
+    const supabase = createClient()
+    const { data: { session } } = await supabase.auth.getSession()
+    const userId = session?.user?.id ?? 'anon'
+    set({ messages: [], threadId: `${userId}-${Date.now()}` })
+  },
 
   setThreadId: (id) => set({ threadId: id }),
 

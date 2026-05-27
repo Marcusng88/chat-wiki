@@ -77,7 +77,7 @@ function Resizer() {
 // ── AppHeader ─────────────────────────────────────────────────────────────────
 
 function AppHeader() {
-  const { setMobileDrawerOpen } = useAppStore()
+  const { setMobileDrawerOpen, setThreadId } = useAppStore()
   const [menuOpen, setMenuOpen] = useState(false)
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -86,8 +86,11 @@ function AppHeader() {
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.auth.getUser().then(({ data }) => setUserEmail(data.user?.email ?? null))
-  }, [])
+    supabase.auth.getUser().then(({ data }) => {
+      setUserEmail(data.user?.email ?? null)
+      if (data.user?.id) setThreadId(`${data.user.id}-${Date.now()}`)
+    })
+  }, [setThreadId])
 
   useEffect(() => {
     if (!menuOpen) return

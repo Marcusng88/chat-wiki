@@ -71,7 +71,7 @@ export default function ChatPanel() {
       cancelText: 'Keep this one',
     })
     if (!ok) return
-    clearMessages(crypto.randomUUID())
+    await clearMessages()
   }, [requestConfirm, clearMessages])
 
   const readyCount = documents.filter((d) => d.status === 'ready').length

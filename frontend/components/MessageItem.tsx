@@ -3,7 +3,6 @@ import type { Message, MessageSource } from '@/lib/types'
 import Markdown from './Markdown'
 import SourcePill from './SourcePill'
 import HITLCard from './HITLCard'
-import A2UICard from './A2UICard'
 import A2UIRenderer from './A2UIRenderer'
 import { Sparkle } from './Icons'
 
@@ -89,8 +88,7 @@ export default function MessageItem({ msg, onOpenDoc, onResolveHitl, onQuery, su
           }}
           sources={msg.sources}
         />
-        {msg.a2ui && <A2UICard payload={msg.a2ui} />}
-        {msg.sources && msg.sources.length > 0 && (
+{msg.sources && msg.sources.length > 0 && (
           <div className="sources-row">
             <span className="sources-label">sources</span>
             {msg.sources.map((s) => (

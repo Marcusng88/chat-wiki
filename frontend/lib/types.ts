@@ -74,17 +74,6 @@ export interface HITLSource {
   date: string
 }
 
-export interface A2UIRow {
-  k: string
-  v: string
-}
-
-export interface A2UIPayload {
-  schema: string
-  title: string
-  rows: A2UIRow[]
-}
-
 export interface UserMessage {
   id: string
   role: 'user'
@@ -98,7 +87,6 @@ export interface AgentMessage {
   ts: string
   md: string
   sources?: MessageSource[]
-  a2ui?: A2UIPayload
 }
 
 export interface TypingMessage {
