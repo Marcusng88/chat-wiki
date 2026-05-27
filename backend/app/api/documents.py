@@ -90,6 +90,24 @@ async def list_documents(user_id: str = Depends(get_user_id)):
     return rows
 
 
+@router.get("/{document_id}/raw")
+async def get_document_raw(document_id: str, user_id: str = Depends(get_user_id)):
+    async with get_conn() as conn:
+        async with conn.cursor(row_factory=dict_row) as cur:
+            await cur.execute(
+                "SELECT id FROM documents WHERE id = %s AND user_id = %s",
+                (document_id, user_id),
+            )
+            if not await cur.fetchone():
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found")
+            await cur.execute(
+                "SELECT content FROM chunks WHERE document_id = %s ORDER BY chunk_index",
+                (document_id,),
+            )
+            rows = await cur.fetchall()
+    return {"raw": "\n\n".join(r["content"] for r in rows)}
+
+
 @router.delete("/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_document(document_id: str, user_id: str = Depends(get_user_id)):
     async with get_conn() as conn:

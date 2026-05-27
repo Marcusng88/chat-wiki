@@ -22,6 +22,9 @@ function rowToDocument(r: Awaited<ReturnType<typeof listDocuments>>[number]): Do
     pages: 1,
     addedAt: new Date(r.created_at).toLocaleDateString(),
     size: '—',
+    wikiPage: r.wiki_page ?? undefined,
+    summary: r.summary ?? undefined,
+    topics: r.topics.length > 0 ? r.topics : undefined,
   }
 }
 

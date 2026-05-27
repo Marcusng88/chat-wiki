@@ -61,6 +61,15 @@ export async function confirmDocument(document_id: string): Promise<void> {
   if (!res.ok) throw new Error(`confirm failed: ${res.status}`)
 }
 
+export async function getDocumentRaw(document_id: string): Promise<string> {
+  const headers = await authHeaders()
+  delete headers['Content-Type']
+  const res = await fetch(`${BACKEND}/documents/${document_id}/raw`, { headers })
+  if (!res.ok) throw new Error(`getDocumentRaw failed: ${res.status}`)
+  const data = await res.json()
+  return data.raw as string
+}
+
 export async function deleteDocument(document_id: string): Promise<void> {
   const headers = await authHeaders()
   delete headers['Content-Type']

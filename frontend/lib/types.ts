@@ -17,18 +17,6 @@ export type DocumentStatus =
   | 'unsupported'
   | 'failed'             // frontend-only: upload error before DB record created
 
-export interface WikiEntity {
-  kind: string
-  name: string
-}
-
-export interface WikiContent {
-  summary: string
-  concepts: string[]
-  entities: WikiEntity[]
-  retrieval: string
-}
-
 export interface Document {
   id: string
   title: string
@@ -38,7 +26,9 @@ export interface Document {
   pages: number
   addedAt: string
   size: string
-  wiki?: WikiContent
+  wikiPage?: string
+  summary?: string
+  topics?: string[]
   raw?: string
   progress?: number
   failReason?: string

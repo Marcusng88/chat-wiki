@@ -1,8 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { Document } from '@/lib/types'
 import { Back } from './Icons'
+import Markdown from './Markdown'
+import { getDocumentRaw } from '@/lib/api'
 
 const FILE_LABEL: Record<string, string> = {
   pdf: 'PDF', md: 'MD', txt: 'TXT', pptx: 'PPT', img: 'IMG',
@@ -15,6 +17,17 @@ interface Props {
 
 export default function DetailView({ doc, onBack }: Props) {
   const [tab, setTab] = useState<'wiki' | 'raw' | 'meta'>('wiki')
+  const [rawText, setRawText] = useState<string | null>(null)
+  const [rawLoading, setRawLoading] = useState(false)
+
+  useEffect(() => {
+    if (tab !== 'raw' || rawText !== null || rawLoading) return
+    setRawLoading(true)
+    getDocumentRaw(doc.id)
+      .then((text) => setRawText(text))
+      .catch(() => setRawText(''))
+      .finally(() => setRawLoading(false))
+  }, [tab, doc.id, rawText, rawLoading])
 
   return (
     <div className="detail-view">
@@ -39,50 +52,51 @@ export default function DetailView({ doc, onBack }: Props) {
       </div>
 
       <div className="detail-body">
-        {tab === 'wiki' && doc.wiki && (
-          <>
-            <h3>Summary</h3>
-            <p>{doc.wiki.summary}</p>
-            <h3>Concepts</h3>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
-              {doc.wiki.concepts.map((c) => (
-                <span key={c} className="entity-chip">{c}</span>
-              ))}
-            </div>
-            <h3>Entities</h3>
-            <div className="entity-grid">
-              {doc.wiki.entities.map((e, i) => (
-                <div key={i} className="entity-chip"><em>{e.kind}</em>{e.name}</div>
-              ))}
-            </div>
-            <h3>Retrieval hints</h3>
-            <p style={{ color: 'var(--text-secondary)' }}>{doc.wiki.retrieval}</p>
-          </>
+        {tab === 'wiki' && doc.wikiPage && (
+          <Markdown md={doc.wikiPage} />
         )}
-        {tab === 'wiki' && !doc.wiki && (
+        {tab === 'wiki' && !doc.wikiPage && (
           <div className="empty">
             {(doc.status.startsWith('failed_') || doc.status === 'failed' || doc.status === 'unsupported')
               ? 'Wiki not generated — ingestion failed.'
-              : 'Wiki generation in progress…'}
+              : doc.status === 'ready'
+                ? 'Wiki page missing — re-ingest to regenerate.'
+                : 'Wiki generation in progress…'}
           </div>
         )}
         {tab === 'raw' && (
           <>
             <h3>Source excerpt</h3>
-            <div className="detail-raw">{doc.raw ?? '— no raw text available —'}</div>
+            <div className="detail-raw">
+              {rawLoading
+                ? 'Loading…'
+                : rawText
+                  ? rawText
+                  : '— no raw text available —'}
+            </div>
           </>
         )}
         {tab === 'meta' && (
           <dl className="kv-grid">
             <dt>file_type</dt><dd>{doc.fileType}</dd>
             <dt>status</dt><dd>{doc.status}</dd>
-            <dt>pages</dt><dd>{doc.pages}</dd>
-            <dt>size</dt><dd>{doc.size}</dd>
             <dt>added</dt><dd>{doc.addedAt}</dd>
             <dt>conflict</dt><dd>{doc.hasConflict ? 'flagged' : 'none'}</dd>
-            <dt>storage_path</dt><dd style={{ color: 'var(--text-secondary)' }}>/u/{doc.id}.bin</dd>
-            <dt>embeddings</dt>
-            <dd>{doc.status === 'ready' ? `${doc.pages * 7} chunks · OpenAI 3-large` : '—'}</dd>
+            {doc.summary && (
+              <>
+                <dt>summary</dt><dd style={{ color: 'var(--text-secondary)' }}>{doc.summary}</dd>
+              </>
+            )}
+            {doc.topics && doc.topics.length > 0 && (
+              <>
+                <dt>topics</dt>
+                <dd>
+                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                    {doc.topics.map((t) => <span key={t} className="entity-chip">{t}</span>)}
+                  </div>
+                </dd>
+              </>
+            )}
             {doc.failReason && (
               <>
                 <dt>fail_reason</dt>

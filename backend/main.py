@@ -3,6 +3,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 logging.basicConfig(level=logging.INFO)
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("watchfiles").setLevel(logging.WARNING)
 from fastapi.middleware.cors import CORSMiddleware
 from app.db.db import init_pool, close_pool
 from app.api.documents import router as documents_router
