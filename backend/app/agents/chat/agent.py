@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from deepagents import HarnessProfile, create_deep_agent, register_harness_profile
+from deepagents import create_deep_agent
 from deepagents.backends.filesystem import FilesystemBackend
 from langchain.agents.middleware import ModelRetryMiddleware
 from langgraph.checkpoint.memory import MemorySaver
@@ -19,13 +19,6 @@ from app.utils.model_provider import get_llm
 
 _AGENTS_MD = str(Path(__file__).parent / "AGENTS.md")
 _BACKEND_ROOT = FilesystemBackend(root_dir=str(Path(__file__).parent), virtual_mode=True)
-
-register_harness_profile(
-    "openai:gpt-5.4-nano-2026-03-17",
-    HarnessProfile(
-        excluded_tools=frozenset({"ls", "read_file", "write_file", "edit_file", "glob", "grep"}),
-    ),
-)
 
 _checkpointer = MemorySaver()
 
