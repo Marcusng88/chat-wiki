@@ -79,9 +79,15 @@ function Resizer() {
 function AppHeader() {
   const { setMobileDrawerOpen } = useAppStore()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [userEmail, setUserEmail] = useState<string | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
   const requestConfirm = useConfirm()
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data }) => setUserEmail(data.user?.email ?? null))
+  }, [])
 
   useEffect(() => {
     if (!menuOpen) return
@@ -138,14 +144,14 @@ function AppHeader() {
             aria-label="Account"
             title="Account"
           >
-            <span className="avatar">YK</span>
+            <span className="avatar">{userEmail ? userEmail.slice(0, 2).toUpperCase() : '??'}</span>
           </button>
 
           {menuOpen && (
             <div className="account-menu" onClick={(e) => e.stopPropagation()}>
               <div className="account-info">
-                <div className="account-name">You</div>
-                <div className="account-email">you@example.com</div>
+                <div className="account-name">{userEmail?.split('@')[0] ?? 'You'}</div>
+                <div className="account-email">{userEmail ?? ''}</div>
               </div>
               <div className="row-menu-sep" />
               <button className="account-item">

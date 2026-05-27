@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import ThemeToggle from '@/components/ThemeToggle'
 import { createClient } from '@/lib/supabase'
 
-export default function SignInPage() {
+export default function SignUpPage() {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -18,31 +18,21 @@ export default function SignInPage() {
     setError(null)
     setLoading(true)
     const supabase = createClient()
-    const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
+    const { error: authError } = await supabase.auth.signUp({ email, password })
     setLoading(false)
     if (authError) {
-      setError("Email or password doesn't look right. Try again.")
+      if (authError.message.toLowerCase().includes('already')) {
+        setError('An account with this email already exists.')
+      } else {
+        setError('Could not create account. Try again.')
+      }
       return
     }
     router.push('/')
   }
 
-  async function handleGoogle() {
-    setLoading(true)
-    setError(null)
-    const supabase = createClient()
-    const redirectTo = typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : '/auth/callback'
-    const { error: authError } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } })
-    if (authError) {
-      setError('Could not sign in with Google. Try again.')
-      setLoading(false)
-    }
-    // On success: OAuth redirect navigates away — do not setLoading(false)
-  }
-
   return (
     <div className="signin-wrap">
-      {/* top bar */}
       <div className="signin-topbar">
         <div className="brand-block">
           <div className="brand">
@@ -57,41 +47,28 @@ export default function SignInPage() {
         <ThemeToggle />
       </div>
 
-      {/* centered card */}
       <div className="signin-center">
         <div className="signin-card">
-          {/* header */}
           <div className="signin-head">
             <div className="signin-eyebrow">
               <span className="line" />
-              welcome back
+              new here
             </div>
-            <div className="signin-title">Sign in to your library.</div>
+            <div className="signin-title">Create your library.</div>
             <div className="signin-subtitle">
-              Pick up where you left off — your sources, summaries, and conversations are right where you left them.
+              Start building your personal knowledge base — upload sources and let the wiki grow.
             </div>
           </div>
 
-          {/* form */}
-          <form className="signin-form" onSubmit={handleSubmit} aria-label="Sign in form">
+          <form className="signin-form" onSubmit={handleSubmit} aria-label="Sign up form">
             {error && (
               <div className="signin-err" role="alert">{error}</div>
             )}
 
-            {/* email */}
             <div className="field">
               <label htmlFor="email">Email</label>
               <div className="input-wrap">
-                <svg
-                  className="icn"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden
-                >
+                <svg className="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                   <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2Z"/>
                   <polyline points="22,6 12,13 2,6"/>
                 </svg>
@@ -108,20 +85,10 @@ export default function SignInPage() {
               </div>
             </div>
 
-            {/* password */}
             <div className="field">
               <label htmlFor="password">Password</label>
               <div className="input-wrap">
-                <svg
-                  className="icn"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden
-                >
+                <svg className="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                   <rect x="3" y="11" width="18" height="11" rx="2"/>
                   <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                 </svg>
@@ -133,7 +100,7 @@ export default function SignInPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
-                  autoComplete="current-password"
+                  autoComplete="new-password"
                   minLength={6}
                 />
                 <button
@@ -157,26 +124,17 @@ export default function SignInPage() {
                   </svg>
                 </button>
               </div>
-
-              <div className="field-meta">
-                <label className="check-row">
-                  <input type="checkbox" defaultChecked />
-                  Keep me signed in
-                </label>
-                <a className="forgot-link" href="/reset-password">Forgot password?</a>
-              </div>
             </div>
 
-            {/* submit */}
             <button type="submit" className="primary-btn" disabled={loading}>
               {loading ? (
                 <>
                   <span className="spinner" />
-                  Signing you in…
+                  Creating account…
                 </>
               ) : (
                 <>
-                  Sign in
+                  Create account
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="5" y1="12" x2="19" y2="12"/>
                     <polyline points="12 5 19 12 12 19"/>
@@ -184,22 +142,10 @@ export default function SignInPage() {
                 </>
               )}
             </button>
-
-            <div className="signin-sep">or</div>
-
-            <button type="button" className="sso-btn" onClick={handleGoogle} disabled={loading}>
-              <svg width="16" height="16" viewBox="0 0 48 48" aria-hidden>
-                <path fill="#4285F4" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-                <path fill="#34A853" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-                <path fill="#EA4335" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-              </svg>
-              Continue with Google
-            </button>
           </form>
 
           <div className="signin-foot">
-            New here? <a href="/sign-up">Create an account</a>
+            Already have an account? <a href="/sign-in">Sign in</a>
           </div>
         </div>
       </div>
