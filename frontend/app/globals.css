@@ -240,3 +240,74 @@ input:focus-visible {
 }
 .theme-toggle.is-dark .tt-thumb { left: 30px; }
 .theme-toggle.is-light .tt-thumb { left: 2px; }
+
+/* ── Code blocks ────────────────────────────────────────────── */
+.code-block-wrap {
+  position: relative;
+  margin: 0.75em 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--panel-border);
+}
+.code-lang {
+  display: block;
+  padding: 3px 12px;
+  font-size: 0.7rem;
+  font-family: var(--font-dm-mono), monospace;
+  color: var(--text-muted);
+  background: rgba(0,0,0,0.25);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-bottom: 1px solid var(--panel-border);
+}
+.code-block-wrap pre {
+  margin: 0;
+  padding: 1em 1.1em;
+  overflow-x: auto;
+  background: transparent;
+  font-size: 0.82rem;
+  line-height: 1.6;
+}
+.code-block-wrap pre code {
+  font-family: var(--font-dm-mono), monospace;
+  background: none;
+  padding: 0;
+  border-radius: 0;
+}
+
+/* Inline code */
+.md code {
+  font-family: var(--font-dm-mono), monospace;
+  font-size: 0.82em;
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  background: rgba(var(--accent-rgb, 99,102,241), 0.12);
+  color: var(--text-primary);
+}
+.md pre code { background: none; padding: 0; }
+
+/* KaTeX display math */
+.md .katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.5em 0;
+}
+
+/* Tables (remark-gfm) */
+.md table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.75em 0;
+  font-size: 0.85em;
+}
+.md th, .md td {
+  padding: 6px 12px;
+  border: 1px solid var(--panel-border);
+  text-align: left;
+}
+.md th {
+  background: var(--panel-bg-elev);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.md tr:nth-child(even) td { background: rgba(0,0,0,0.08); }
