@@ -1,20 +1,15 @@
 'use client'
 
-import { useCallback, useEffect } from 'react'
+import { useCallback } from 'react'
 import { useAppStore, useActiveConflicts } from '@/store/useAppStore'
 import { useConfirm } from '@/lib/hooks/useConfirm'
-import type { Document, FileType, ProcessingStage } from '@/lib/types'
+import { useDocuments } from '@/lib/hooks/useDocuments'
+import { useDocumentUpload } from '@/lib/hooks/useDocumentUpload'
+import { deleteDocument } from '@/lib/api'
 import MaterialRow from './MaterialRow'
 import UploadZone from './UploadZone'
 import DetailView from './DetailView'
 import { ChevronLeft, ChevronRight, Sparkle } from './Icons'
-
-function toFileType(filename: string): FileType {
-  const ext = (filename.split('.').pop() ?? '').toLowerCase()
-  if (ext === 'pdf' || ext === 'md' || ext === 'txt' || ext === 'pptx') return ext
-  if (ext === 'png' || ext === 'jpg' || ext === 'jpeg' || ext === 'webp') return 'img'
-  return 'txt'
-}
 
 export default function LeftPanel() {
   const {
@@ -30,49 +25,9 @@ export default function LeftPanel() {
   const activeConflicts = useActiveConflicts()
   const requestConfirm = useConfirm()
   const selectedDoc = documents.find((d) => d.id === selectedDocId)
+  const { upload: onUpload } = useDocumentUpload()
 
-  // Animate processing / uploading progress in dev
-  useEffect(() => {
-    const t = setInterval(() => {
-      setDocuments((docs) => {
-        if (!docs.some((d) => d.status === 'processing' || d.status === 'uploading')) return docs
-        return docs.map((d): Document => {
-          if (d.status === 'processing' && typeof d.progress === 'number' && d.progress < 99) {
-            const next = Math.min(99, d.progress + Math.random() * 3)
-            const stage: ProcessingStage =
-              next < 30 ? 'extracting' : next < 60 ? 'chunking' : next < 85 ? 'generating_wiki' : 'indexing'
-            return { ...d, progress: next, stage }
-          }
-          if (d.status === 'uploading' && typeof d.progress === 'number') {
-            const next = d.progress + Math.random() * 8
-            if (next >= 100)
-              return { ...d, status: 'processing', progress: 5, stage: 'extracting' } as Document
-            return { ...d, progress: next }
-          }
-          return d
-        })
-      })
-    }, 900)
-    return () => clearInterval(t)
-  }, [setDocuments])
-
-  const onUpload = useCallback(
-    (files: File[]) => {
-      const newDocs: Document[] = files.map((f, i) => ({
-        id: 'u' + Date.now() + i,
-        title: f.name,
-        fileType: toFileType(f.name),
-        status: 'uploading',
-        progress: 0,
-        hasConflict: false,
-        pages: 1,
-        addedAt: 'just now',
-        size: f.size ? `${(f.size / 1024).toFixed(0)} KB` : '— KB',
-      }))
-      setDocuments((prev) => [...newDocs, ...prev])
-    },
-    [setDocuments]
-  )
+  useDocuments()
 
   const onDelete = useCallback(
     async (id: string) => {
@@ -86,8 +41,15 @@ export default function LeftPanel() {
         danger: true,
       })
       if (!ok) return
+      const snapshot = [...documents]
       setDocuments((docs) => docs.filter((d) => d.id !== id))
       if (selectedDocId === id) backToList()
+      try {
+        await deleteDocument(id)
+      } catch (e) {
+        console.error('delete failed', e)
+        setDocuments(snapshot)
+      }
     },
     [documents, setDocuments, selectedDocId, backToList, requestConfirm]
   )
@@ -180,7 +142,7 @@ export default function LeftPanel() {
       )}
 
       {leftPanelView === 'detail' && selectedDoc && (
-        <DetailView doc={selectedDoc} onBack={backToList} />
+        <DetailView key={selectedDoc.id} doc={selectedDoc} onBack={backToList} />
       )}
     </>
   )

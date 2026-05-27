@@ -160,7 +160,18 @@
   align-items: center;
 }
 .material-row .sub .dot { width: 2px; height: 2px; background: currentColor; border-radius: 999px; opacity: 0.5; }
-.material-row .sub .busy { color: var(--status-processing); text-transform: uppercase; letter-spacing: 0.06em; }
+.material-row .sub .busy { color: var(--status-processing); text-transform: uppercase; letter-spacing: 0.06em; display: flex; align-items: center; gap: 5px; }
+.material-row .sub .spinner {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 
 /* ── Status ── */
 .status-col {

@@ -2,32 +2,32 @@
 
 import { useEffect, useRef, useState } from 'react'
 import type { Document } from '@/lib/types'
+import { FILE_TYPE_ICON_CLASS } from '@/lib/types'
 import { FileIcon, Alert, More, Eye, Trash } from './Icons'
 
-const FILE_ICON_CLASS: Record<string, string> = {
-  pdf: 'ftype-pdf',
-  md: 'ftype-md',
-  txt: 'ftype-txt',
-  pptx: 'ftype-pptx',
-  img: 'ftype-img',
-}
+const FAILED_STATUSES = new Set(['failed', 'failed_extraction', 'failed_embedding', 'failed_wiki', 'failed_indexing'])
+const PROCESSING_STATUSES = new Set(['uploaded', 'extracting', 'chunking', 'embedding', 'generating_wiki', 'indexing', 'conflict_scan'])
 
 function StatusBadge({ doc }: { doc: Document }) {
   if (doc.status === 'ready')
     return <span className="status-badge ready"><span className="pip" />ready</span>
-  if (doc.status === 'failed')
-    return <span className="status-badge failed"><span className="pip" />failed</span>
+  if (doc.status === 'unsupported')
+    return <span className="status-badge failed"><span className="pip" />unsupported</span>
+  if (FAILED_STATUSES.has(doc.status)) {
+    const label = doc.status.replace('failed_', 'failed ')
+    return <span className="status-badge failed"><span className="pip" />{label}</span>
+  }
   if (doc.status === 'uploading')
     return (
       <span className="status-badge uploading">
         <span className="pip" />uploading{doc.progress != null ? ` ${Math.round(doc.progress)}%` : ''}
       </span>
     )
-  if (doc.status === 'processing') {
-    const stageLabel = (doc.stage ?? 'processing').replace('_', ' ')
-    return <span className="status-badge processing"><span className="pip" />{stageLabel}</span>
+  if (PROCESSING_STATUSES.has(doc.status)) {
+    const label = doc.status.replace(/_/g, ' ')
+    return <span className="status-badge processing"><span className="pip" />{label}</span>
   }
-  return <span className="status-badge">{doc.status}</span>
+  return <span className="status-badge">{doc.status.replace(/_/g, ' ')}</span>
 }
 
 interface TipState { top: number; left: number; side: 'right' | 'below' }
@@ -63,8 +63,8 @@ export default function MaterialRow({ doc, active = false, onClick, onDelete, co
     return () => window.removeEventListener('scroll', onScroll, true)
   }, [tip])
 
-  const isBusy = (doc.status === 'processing' || doc.status === 'uploading') && typeof doc.progress === 'number'
-  const isFailed = doc.status === 'failed'
+  const isBusy = doc.status === 'uploading' && typeof doc.progress === 'number'
+  const isFailed = FAILED_STATUSES.has(doc.status) || doc.status === 'unsupported'
 
   const hint = isFailed
     ? `Couldn't read this file${doc.failReason ? ' — ' + doc.failReason : ''}. Open the menu to try again or remove it.`
@@ -106,7 +106,7 @@ export default function MaterialRow({ doc, active = false, onClick, onDelete, co
       onMouseEnter={showTip}
       onMouseLeave={hideTip}
     >
-      <div className={`file-icon ${FILE_ICON_CLASS[doc.fileType] ?? ''}`}>
+      <div className={`file-icon ${FILE_TYPE_ICON_CLASS[doc.fileType] ?? ''}`}>
         <FileIcon type={doc.fileType} />
         {isFailed && (
           <span className="overlay-mark fail-mark" aria-label="failed">✕</span>
@@ -122,8 +122,10 @@ export default function MaterialRow({ doc, active = false, onClick, onDelete, co
         <div className="title" title={doc.title}>{doc.title}</div>
         <div className="sub">
           {isBusy
-            ? <span className="busy">{(doc.stage ?? doc.status).replace('_', ' ')} · {Math.round(doc.progress!)}%</span>
-            : <span>{doc.addedAt}</span>
+            ? <span className="busy">uploading · {Math.round(doc.progress!)}%</span>
+            : PROCESSING_STATUSES.has(doc.status)
+              ? <span className="busy"><span className="spinner" aria-hidden="true" /> processing…</span>
+              : <span>{doc.addedAt}</span>
           }
         </div>
       </div>

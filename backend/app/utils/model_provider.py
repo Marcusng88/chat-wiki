@@ -1,0 +1,34 @@
+from langchain.chat_models import init_chat_model
+from langchain_openai import OpenAIEmbeddings
+from app.utils.config import settings
+
+
+def get_llm(temperature: float = 0.0):
+    return init_chat_model(
+        "openai:gpt-5.4-nano-2026-03-17",
+        temperature=temperature,
+        api_key=settings.openai_api_key,
+    )
+
+
+
+def get_embeddings() -> OpenAIEmbeddings:
+    return OpenAIEmbeddings(
+        model="text-embedding-3-small",
+        api_key=settings.openai_api_key,
+    )
+
+# Gemini alternatives (swap above to enable):
+# def get_llm():
+#     return init_chat_model(
+#         "google_genai:gemini-2.0-flash",
+#         temperature=0.0,
+#         api_key=settings.google_api_key,
+#     )
+#
+# from langchain_google_genai import GoogleGenerativeAIEmbeddings
+# def get_embeddings():
+#     return GoogleGenerativeAIEmbeddings(
+#         model="models/text-embedding-004",
+#         google_api_key=settings.google_api_key,
+#     )

@@ -1,18 +1,47 @@
 export type FileType = 'pdf' | 'md' | 'txt' | 'pptx' | 'img'
-export type DocumentStatus = 'uploading' | 'processing' | 'ready' | 'failed'
-export type ProcessingStage = 'extracting' | 'chunking' | 'generating_wiki' | 'indexing'
 
-export interface WikiEntity {
-  kind: string
-  name: string
+const _EXT_MAP: Record<string, FileType> = {
+  pdf: 'pdf', md: 'md', txt: 'txt', pptx: 'pptx',
+  png: 'img', jpg: 'img', jpeg: 'img', webp: 'img',
 }
 
-export interface WikiContent {
-  summary: string
-  concepts: string[]
-  entities: WikiEntity[]
-  retrieval: string
+const _API_MAP: Record<string, FileType> = {
+  pdf: 'pdf', md: 'md', txt: 'txt', pptx: 'pptx', image: 'img',
 }
+
+export const FILE_TYPE_ICON_CLASS: Record<FileType, string> = {
+  pdf: 'ftype-pdf', md: 'ftype-md', txt: 'ftype-txt', pptx: 'ftype-pptx', img: 'ftype-img',
+}
+
+export function fileTypeFromExtension(filename: string): FileType {
+  const ext = (filename.split('.').pop() ?? '').toLowerCase()
+  return _EXT_MAP[ext] ?? 'txt'
+}
+
+export function fileTypeFromApi(apiType: string): FileType {
+  return _API_MAP[apiType] ?? 'txt'
+}
+
+export function fileTypeToApi(fileType: FileType): string {
+  return fileType === 'img' ? 'image' : fileType
+}
+
+export type DocumentStatus =
+  | 'uploading'          // frontend-only: XHR PUT in progress
+  | 'uploaded'           // in DB, ingestion not started
+  | 'extracting'
+  | 'chunking'
+  | 'embedding'
+  | 'generating_wiki'
+  | 'indexing'
+  | 'conflict_scan'
+  | 'ready'
+  | 'failed_extraction'
+  | 'failed_embedding'
+  | 'failed_wiki'
+  | 'failed_indexing'
+  | 'unsupported'
+  | 'failed'             // frontend-only: upload error before DB record created
 
 export interface Document {
   id: string
@@ -23,10 +52,11 @@ export interface Document {
   pages: number
   addedAt: string
   size: string
-  wiki?: WikiContent
+  wikiPage?: string
+  summary?: string
+  topics?: string[]
   raw?: string
   progress?: number
-  stage?: ProcessingStage
   failReason?: string
 }
 
