@@ -45,51 +45,53 @@ Delegate to `ui_renderer` via `task(subagent_type='ui_renderer', description='..
 
 ### When to use a card
 
-| Trigger | Card |
+| Trigger | Visual intent |
 |---|---|
-| User says "show", "visualize", "summarize visually", "give me a card" | yes |
-| User asks "compare X and Y" | DocCompare |
-| User asks "what docs do I have" | DocStatusBoard or TopicMap |
-| Topic spans ≥2 sources worth visual comparison | KnowledgePanel |
-| User says "explain", "tell me", "what is X" | text only |
+| User says "show", "visualize", "summarize visually", "give me a card" | rich summary card |
+| User asks "compare X and Y" | side-by-side column comparison |
+| User asks "what docs do I have" | status list or topic cloud |
+| Topic spans ≥2 sources worth visual comparison | multi-source panel with citations |
+| User wants a specific quote surfaced visually | blockquote source card |
+| User says "explain", "tell me", "what is X" | text only — no card |
 
-Interleave freely — text, card, text, card — as the response warrants. No fixed order.
-
-### Available cards
-
-| Card | When to use |
-|---|---|
-| **WikiCard** | Showing a document's wiki page content |
-| **SourceBlock** | Showing a specific source chunk or quote |
-| **DocCompare** | Comparing two or more documents on a topic |
-| **TopicMap** | Showing what topics exist across the library |
-| **KnowledgePanel** | Multi-source synthesized answer with citations |
-| **DocStatusBoard** | Showing document processing status overview |
+Interleave freely — text, card, text, card — as the response warrants.
 
 ### Delegation rules
 
-1. **Fetch and organize first.** You synthesize and structure the content. `ui_renderer` only renders — it has no DB access and generates nothing.
-2. **Pass full final content.** Never pass vague descriptions like "WikiCard for transformer". Pass the actual title, full content text, real doc_ids, actual topic lists.
-3. **Never echo raw tool output** as text. If you fetched a wiki page, either paraphrase it in prose or pass it to `ui_renderer` — never paste the raw result verbatim.
-4. **One delegation per response** unless interleaving multiple card types.
+1. **Fetch and organize first.** You synthesize the content. `ui_renderer` only renders —
+   it has no DB access and generates nothing.
+2. **Pass full final content.** Titles, full body text, real IDs, actual lists.
+   Never pass vague instructions like "show the transformer doc".
+3. **Describe visual intent.** Tell `ui_renderer` what kind of layout fits —
+   e.g. "a card with a title, full markdown body, and topic chips at the bottom".
+   It will pick the right primitives.
+4. **Never echo raw tool output** as text. If you fetched a wiki page, either paraphrase
+   it in prose or delegate to `ui_renderer` — never paste raw results verbatim.
+5. **One delegation per response** unless interleaving multiple surface types.
 
 ### Delegation format
+
+Use labeled fields for data, then a plain-English intent line at the end:
 
 ```
 task(
   subagent_type='ui_renderer',
-  description='''Component: WikiCard
+  description="""
 title: "Attention Is All You Need"
+date: "2017-06-12"
 content: "<full synthesized text — do not truncate>"
 topics: ["transformers", "attention", "self-attention"]
 doc_id: "abc123"
-created_at: "2017-06-12"'''
+
+intent: rich document summary card — title header, full markdown content body,
+topic chips at the bottom, date in caption style
+"""
 )
 ```
 
-Use labeled fields, not prose sentences. Prose gets truncated. Labeled fields force completeness.
-
-After `ui_renderer` returns, reference its content naturally: "from the wiki page we can see..." — never say "I've generated a visual" or "above is a card".
+Use labeled fields, not prose sentences for data. Prose descriptions work for intent.
+After `ui_renderer` returns, reference the content naturally in your reply —
+never say "I've generated a visual" or "above is a card".
 
 ---
 
