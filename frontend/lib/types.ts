@@ -89,12 +89,20 @@ export interface TextBlock {
 
 export type Block = TextBlock
 
+export interface ToolCallStep {
+  id: string
+  name: string
+  args: Record<string, unknown>
+  status: 'streaming' | 'done'
+}
+
 export interface AgentMessage {
   id: string
   role: 'agent'
   ts: string
   blocks: Block[]
   sources?: MessageSource[]
+  steps?: ToolCallStep[]
 }
 
 export interface TypingMessage {

@@ -3,7 +3,7 @@
 import { create } from 'zustand'
 import { useShallow } from 'zustand/react/shallow'
 import { createClient } from '@/lib/supabase'
-import type { Block, Document, Message, TextBlock } from '@/lib/types'
+import type { Block, Document, Message, TextBlock, ToolCallStep } from '@/lib/types'
 
 interface AppState {
   documents: Document[]
@@ -24,6 +24,8 @@ interface AppActions {
   updateMessage: (id: string, patch: Partial<Message>) => void
   addBlock: (msgId: string, block: Block) => void
   updateTextBlock: (msgId: string, blockId: string, md: string) => void
+  addToolCallStep: (msgId: string, step: ToolCallStep) => void
+  updateToolCallStep: (msgId: string, stepId: string, patch: Partial<ToolCallStep>) => void
   clearMessages: () => Promise<void>
   setThreadId: (id: string | null) => void
   setLeftCollapsed: (value: boolean | ((prev: boolean) => boolean)) => void
@@ -82,6 +84,28 @@ export const useAppStore = create<AppState & AppActions>()((set) => ({
           ...m,
           blocks: m.blocks.map((b) =>
             b.type === 'text' && b.id === blockId ? { ...b, md } as TextBlock : b
+          ),
+        } as Message
+      }),
+    })),
+
+  addToolCallStep: (msgId, step) =>
+    set((s) => ({
+      messages: s.messages.map((m) =>
+        m.id === msgId && m.role === 'agent'
+          ? { ...m, steps: [...(m.steps ?? []), step] } as Message
+          : m
+      ),
+    })),
+
+  updateToolCallStep: (msgId, stepId, patch) =>
+    set((s) => ({
+      messages: s.messages.map((m) => {
+        if (m.id !== msgId || m.role !== 'agent') return m
+        return {
+          ...m,
+          steps: (m.steps ?? []).map((s) =>
+            s.id === stepId ? { ...s, ...patch } : s
           ),
         } as Message
       }),

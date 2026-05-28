@@ -5,6 +5,7 @@ import { useAppStore } from '@/store/useAppStore'
 import Markdown from './Markdown'
 import HITLCard from './HITLCard'
 import OpenUIRenderer from './OpenUIRenderer'
+import ToolCallStream from './ToolCallStream'
 
 function isOpenUILang(text: string): boolean {
   return /^\s*root\s*=\s*\w+\s*\(/.test(text)
@@ -80,6 +81,7 @@ export default function MessageItem({ msg, onOpenDoc, onResolveHitl, onQuery }: 
         <span className="ts">{agentMsg.ts}</span>
       </div>
       <div className="msg-bubble">
+        <ToolCallStream steps={agentMsg.steps ?? []} isStreaming={isStreaming} />
         {agentMsg.blocks.map((block) =>
           isOpenUILang((block as TextBlock).md) ? (
             <div key={(block as TextBlock).id} className="openui-block">

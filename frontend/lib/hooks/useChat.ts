@@ -18,6 +18,7 @@ function nowTs() {
 
 export function useChat() {
   const textBuf = useRef<Record<string, string>>({})
+  const argsBuf = useRef<Record<string, string>>({})
   const currentTurnId = useRef<string | null>(null)
 
   const ensureTurn = useCallback(() => {
@@ -42,10 +43,47 @@ export function useChat() {
     return {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       next(event: any) {
-        const { addBlock, updateTextBlock, setMessages, setIsStreaming, setPendingHITL } =
+        const { addBlock, updateTextBlock, setMessages, setIsStreaming, setPendingHITL, addToolCallStep, updateToolCallStep } =
           useAppStore.getState()
 
         switch (event.type) {
+          case EventType.TOOL_CALL_START: {
+            const turnId = ensureTurn()
+            argsBuf.current[event.toolCallId] = ''
+            addToolCallStep(turnId, {
+              id: event.toolCallId,
+              name: event.toolCallName ?? event.toolCallId,
+              args: {},
+              status: 'streaming',
+            })
+            break
+          }
+
+          case EventType.TOOL_CALL_ARGS: {
+            if (!currentTurnId.current) break
+            argsBuf.current[event.toolCallId] = (argsBuf.current[event.toolCallId] ?? '') + event.delta
+            try {
+              const parsed = JSON.parse(argsBuf.current[event.toolCallId])
+              updateToolCallStep(currentTurnId.current, event.toolCallId, { args: parsed })
+            } catch {
+              // partial JSON — skip update until valid
+            }
+            break
+          }
+
+          case EventType.TOOL_CALL_END: {
+            if (!currentTurnId.current) break
+            // final parse with accumulated buffer
+            try {
+              const parsed = JSON.parse(argsBuf.current[event.toolCallId] ?? '{}')
+              updateToolCallStep(currentTurnId.current, event.toolCallId, { args: parsed, status: 'done' })
+            } catch {
+              updateToolCallStep(currentTurnId.current, event.toolCallId, { status: 'done' })
+            }
+            delete argsBuf.current[event.toolCallId]
+            break
+          }
+
           case EventType.TEXT_MESSAGE_START: {
             const turnId = ensureTurn()
             textBuf.current[event.messageId] = ''
@@ -96,6 +134,7 @@ export function useChat() {
             setMessages((m) => m.filter((x) => x.role !== 'typing'))
             currentTurnId.current = null
             textBuf.current = {}
+            argsBuf.current = {}
             setIsStreaming(false)
             break
           }
@@ -112,6 +151,7 @@ export function useChat() {
             } satisfies AgentMessage)
             currentTurnId.current = null
             textBuf.current = {}
+            argsBuf.current = {}
             setIsStreaming(false)
             break
           }
@@ -130,6 +170,7 @@ export function useChat() {
         } satisfies AgentMessage)
         currentTurnId.current = null
         textBuf.current = {}
+        argsBuf.current = {}
         setIsStreaming(false)
       },
     }
