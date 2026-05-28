@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@import "@openuidev/react-ui/components.css";
+@import "@openuidev/react-ui/defaults.css";
 @import "./styles/_layout.css";
 @import "./styles/_header.css";
 @import "./styles/_left-panel.css";
@@ -8,6 +10,7 @@
 @import "./styles/_input.css";
 @import "./styles/_dialog.css";
 @import "./styles/_misc.css";
+@import "./styles/_openui.css";
 @import "./styles/_signin.css";
 
 :root {
@@ -53,9 +56,9 @@
   --status-conflict: #f97316;
 
   /* ── font aliases ── */
-  --font-display: var(--font-syne);
+  --font-display: var(--font-inter), 'Inter', sans-serif;
   --font-mono: var(--font-dm-mono), 'DM Mono', ui-monospace, monospace;
-  --font-body: var(--font-dm-mono);
+  --font-body: var(--font-inter), 'Inter', sans-serif;
 }
 
 [data-theme="light"] {
@@ -94,7 +97,7 @@ body {
 body {
   background: var(--page-bg);
   color: var(--text-primary);
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 13px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -116,7 +119,7 @@ body::before {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-display), 'Syne', sans-serif;
+  font-family: var(--font-display);
 }
 
 button { font-family: inherit; cursor: pointer; }
@@ -311,3 +314,24 @@ input:focus-visible {
   color: var(--text-primary);
 }
 .md tr:nth-child(even) td { background: rgba(0,0,0,0.08); }
+
+/* A2UI loading placeholder */
+.a2ui-loading {
+  display: flex;
+  align-items: center;
+  padding: 12px 0;
+  gap: 4px;
+}
+
+.a2ui-loading-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-muted, #888);
+  animation: a2ui-pulse 1s ease-in-out infinite;
+}
+
+@keyframes a2ui-pulse {
+  0%, 100% { opacity: 0.3; }
+  50%       { opacity: 1; }
+}

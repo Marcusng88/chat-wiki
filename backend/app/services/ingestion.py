@@ -4,6 +4,7 @@ from psycopg.rows import dict_row
 
 from app.agents.docs_ingestion.agent import build_document_processor_agent
 from app.db.db import get_conn
+from app.schemas.enums import DocumentStatus
 
 logger = logging.getLogger(__name__)
 
@@ -16,8 +17,8 @@ async def run_ingestion(document_id: str, file_type: str) -> None:
         async with get_conn() as conn:
             async with conn.cursor(row_factory=dict_row) as cur:
                 await cur.execute(
-                    "UPDATE documents SET status = 'unsupported', updated_at = now() WHERE id = %s",
-                    (document_id,),
+                    "UPDATE documents SET status = %s, updated_at = now() WHERE id = %s",
+                    (DocumentStatus.UNSUPPORTED, document_id),
                 )
         return
 

@@ -1,27 +1,18 @@
 'use client'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useAppStore } from '@/store/useAppStore'
+import { useChatStore } from '@/store/useChatStore'
+import { useDocumentStore } from '@/store/useDocumentStore'
+import { useUIStore } from '@/store/useUIStore'
 import { useConfirm } from '@/lib/hooks/useConfirm'
 import { useChat } from '@/lib/hooks/useChat'
+import { DOCUMENT_STATUS } from '@/lib/types'
 import MessageItem from './MessageItem'
 import { Plus, Send } from './Icons'
 
-const SUGGESTIONS = [
-  'summarize my notes on attention variants',
-  'what changed between april and may decisions?',
-  'find every mention of HITL approval flow',
-]
-
 export default function ChatPanel() {
-  const {
-    messages,
-    documents,
-    isStreaming,
-    pendingHITL,
-    clearMessages,
-    openDocument,
-    setLeftCollapsed,
-  } = useAppStore()
+  const { messages, isStreaming, pendingHITL, clearMessages } = useChatStore()
+  const { documents, openDocument } = useDocumentStore()
+  const { setLeftCollapsed } = useUIStore()
   const chat = useChat()
   const requestConfirm = useConfirm()
   const [input, setInput] = useState('')
@@ -74,7 +65,7 @@ export default function ChatPanel() {
     await clearMessages()
   }, [requestConfirm, clearMessages])
 
-  const readyCount = documents.filter((d) => d.status === 'ready').length
+  const readyCount = documents.filter((d) => d.status === DOCUMENT_STATUS.READY).length
 
   return (
     <>
@@ -89,22 +80,15 @@ export default function ChatPanel() {
       </div>
 
       <div className="chat-body" ref={bodyRef}>
-        {messages.map((m, idx) => {
-          const isLastAgent =
-            m.role === 'agent' &&
-            !isStreaming &&
-            messages.slice(idx + 1).every((x) => x.role !== 'agent' && x.role !== 'hitl' && x.role !== 'typing')
-          return (
-            <MessageItem
-              key={m.id}
-              msg={m}
-              onOpenDoc={openDoc}
-              onResolveHitl={resolveHITL}
-              onQuery={send}
-              suggestions={isLastAgent ? SUGGESTIONS.map((s) => ({ text: s, onPick: send })) : null}
-            />
-          )
-        })}
+        {messages.map((m) => (
+          <MessageItem
+            key={m.id}
+            msg={m}
+            onOpenDoc={openDoc}
+            onResolveHitl={resolveHITL}
+            onQuery={send}
+          />
+        ))}
       </div>
 
       <div className="chat-input-wrap">
@@ -116,7 +100,13 @@ export default function ChatPanel() {
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() }
             }}
-            placeholder={isStreaming ? 'agent is responding…' : pendingHITL ? 'resolve the conflict card above to continue…' : 'ask about your knowledge — enter to send, shift+enter newline'}
+            placeholder={
+              isStreaming
+                ? 'agent is responding…'
+                : pendingHITL
+                ? 'resolve the conflict card above to continue…'
+                : 'ask about your knowledge — enter to send, shift+enter newline'
+            }
             rows={1}
           />
           <div className="chat-input-bottom">

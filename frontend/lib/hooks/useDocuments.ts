@@ -1,15 +1,10 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useAppStore } from '@/store/useAppStore'
+import { useDocumentStore } from '@/store/useDocumentStore'
 import { listDocuments } from '@/lib/api'
-import { fileTypeFromApi } from '@/lib/types'
+import { fileTypeFromApi, PROCESSING_STATUSES } from '@/lib/types'
 import type { Document, DocumentStatus } from '@/lib/types'
-
-const PROCESSING_STATUSES = new Set([
-  'uploaded', 'extracting', 'chunking', 'embedding',
-  'generating_wiki', 'indexing', 'conflict_scan',
-])
 
 export function rowToDocument(r: Awaited<ReturnType<typeof listDocuments>>[number]): Document {
   return {
@@ -28,8 +23,8 @@ export function rowToDocument(r: Awaited<ReturnType<typeof listDocuments>>[numbe
 }
 
 export function useDocuments() {
-  const setDocuments = useAppStore((s) => s.setDocuments)
-  const documents = useAppStore((s) => s.documents)
+  const setDocuments = useDocumentStore((s) => s.setDocuments)
+  const documents = useDocumentStore((s) => s.documents)
 
   // Initial fetch
   useEffect(() => {

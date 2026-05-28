@@ -1,26 +1,33 @@
 'use client'
-import type { Message, MessageSource } from '@/lib/types'
-import Markdown from './Markdown'
-import SourcePill from './SourcePill'
+import { useCallback } from 'react'
+import type { AgentMessage, Message, MessageSource } from '@/lib/types'
+import { useChatStore } from '@/store/useChatStore'
 import HITLCard from './HITLCard'
-import A2UIRenderer from './A2UIRenderer'
-import { Sparkle } from './Icons'
-
-export interface Suggestion {
-  text: string
-  onPick: (text: string) => void
-}
+import OpenUIRenderer from './OpenUIRenderer'
+import ToolCallStream from './ToolCallStream'
 
 interface Props {
   msg: Message
   onOpenDoc?: (docId: string) => void
   onResolveHitl?: (choice: string, notes?: string) => void
   onQuery?: (text: string) => void
-  suggestions?: Suggestion[] | null
 }
 
-export default function MessageItem({ msg, onOpenDoc, onResolveHitl, onQuery, suggestions }: Props) {
+export default function MessageItem({ msg, onOpenDoc, onResolveHitl, onQuery }: Props) {
   const openDoc = onOpenDoc ?? (() => {})
+  const isStreaming = useChatStore((s) => s.isStreaming)
+
+  const handleAction = useCallback((event: unknown) => {
+    const e = event as { type: string; humanFriendlyMessage?: string }
+    if (e.type === 'continue_conversation' && e.humanFriendlyMessage) {
+      const msg = e.humanFriendlyMessage
+      if (msg.startsWith('__cite__:') && onOpenDoc) {
+        onOpenDoc(msg.slice(9))
+        return
+      }
+      if (onQuery) onQuery(msg)
+    }
+  }, [onQuery, onOpenDoc])
 
   if (msg.role === 'user') {
     return (
@@ -46,18 +53,6 @@ export default function MessageItem({ msg, onOpenDoc, onResolveHitl, onQuery, su
     )
   }
 
-  if (msg.role === 'a2ui') {
-    return (
-      <div className="msg-row agent">
-        <div className="who">
-          <span>agent</span>
-          <span className="ts">{msg.ts}</span>
-        </div>
-        <A2UIRenderer component={msg.component} data={msg.data} onOpenDoc={onOpenDoc} onQuery={onQuery} />
-      </div>
-    )
-  }
-
   if (msg.role === 'hitl') {
     return (
       <div className="msg-row agent" style={{ width: '100%' }}>
@@ -72,7 +67,7 @@ export default function MessageItem({ msg, onOpenDoc, onResolveHitl, onQuery, su
     )
   }
 
-  // agent
+  // msg.role === 'agent'
   return (
     <div className="msg-row agent">
       <div className="who">
@@ -80,38 +75,26 @@ export default function MessageItem({ msg, onOpenDoc, onResolveHitl, onQuery, su
         <span className="ts">{msg.ts}</span>
       </div>
       <div className="msg-bubble">
-        <Markdown
-          md={msg.md}
-          onCite={(idx) => {
-            const src = (msg.sources ?? []).find((s: MessageSource) => s.idx === idx)
-            if (src) openDoc(src.docId)
-          }}
-          sources={msg.sources}
-        />
-{msg.sources && msg.sources.length > 0 && (
-          <div className="sources-row">
-            <span className="sources-label">sources</span>
-            {msg.sources.map((s) => (
-              <SourcePill key={s.idx} src={s} onOpen={openDoc} />
-            ))}
-          </div>
-        )}
-        {suggestions && suggestions.length > 0 && (
-          <div className="followup-tray">
-            <div className="suggestion-label">
-              <Sparkle />
-              <span>follow up</span>
+        <ToolCallStream steps={msg.steps ?? []} isStreaming={isStreaming} />
+        {msg.blocks.map((block) => {
+          if (block.type === 'openui') {
+            return (
+              <div key={block.id} className="openui-block">
+                <OpenUIRenderer
+                  content={block.content}
+                  isStreaming={isStreaming}
+                  onAction={handleAction}
+                />
+              </div>
+            )
+          }
+          // error block
+          return (
+            <div key={block.id} className="msg-error">
+              {block.message}
             </div>
-            <div className="suggestion-chips">
-              {suggestions.map((s) => (
-                <button key={s.text} className="suggestion-chip" onClick={() => s.onPick(s.text)}>
-                  <span className="arrow">↗</span>
-                  <span>{s.text}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
+          )
+        })}
       </div>
     </div>
   )

@@ -1,0 +1,41 @@
+.openui-block {
+  margin: 8px 0;
+  border-radius: 12px;
+  overflow: hidden;
+  animation: cardIn 0.2s ease;
+
+  /* match user message font size (12.5px) */
+  --openui-text-body-xs: 400 10px/1.5 "Inter", sans-serif;
+  --openui-text-body-xs-heavy: 500 10px/1.5 "Inter", sans-serif;
+  --openui-text-body-sm: 400 12.5px/1.5 "Inter", sans-serif;
+  --openui-text-body-sm-heavy: 500 12.5px/1.5 "Inter", sans-serif;
+  --openui-text-body-default: 400 12.5px/1.5 "Inter", sans-serif;
+  --openui-text-body-default-heavy: 500 12.5px/1.5 "Inter", sans-serif;
+  --openui-text-label-xs: 400 10px/1.25 "Inter", sans-serif;
+  --openui-text-label-xs-heavy: 500 10px/1.25 "Inter", sans-serif;
+  --openui-text-label-sm: 400 12.5px/1.25 "Inter", sans-serif;
+  --openui-text-label-sm-heavy: 500 12.5px/1.25 "Inter", sans-serif;
+  --openui-text-label-default: 400 12.5px/1.25 "Inter", sans-serif;
+  --openui-text-label-default-heavy: 500 12.5px/1.25 "Inter", sans-serif;
+
+  /* map project dark tokens → openui vars */
+  --openui-background: var(--panel-bg);
+  --openui-foreground: var(--panel-bg-elev);
+  --openui-text-neutral-primary: var(--text-primary);
+  --openui-text-neutral-secondary: var(--text-secondary);
+  --openui-text-neutral-tertiary: var(--text-muted);
+  --openui-border-default: var(--panel-border);
+  --openui-border-interactive: var(--panel-border-strong);
+  --openui-interactive-accent-default: var(--accent);
+}
+
+[data-theme="light"] .openui-block {
+  --openui-background: var(--panel-bg);
+  --openui-foreground: var(--panel-bg-elev);
+  --openui-text-neutral-primary: var(--text-primary);
+  --openui-text-neutral-secondary: var(--text-secondary);
+  --openui-text-neutral-tertiary: var(--text-muted);
+  --openui-border-default: var(--panel-border);
+  --openui-border-interactive: var(--panel-border-strong);
+  --openui-interactive-accent-default: var(--accent);
+}
