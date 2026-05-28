@@ -280,6 +280,313 @@ const ChunkEvidence = defineComponent({
   component: ChunkEvidenceRenderer,
 })
 
+// ── Shared trend helpers ──────────────────────────────────────────────────────
+
+const TREND_ICONS: Record<string, string> = { up: '↑', down: '↓', neutral: '→' }
+const TREND_COLORS: Record<string, string> = { up: 'var(--status-ready)', down: 'var(--status-failed)', neutral: 'var(--text-muted)' }
+
+// ── MetricCard ────────────────────────────────────────────────────────────────
+
+type MetricCardProps = { label: string; value: string; delta?: string; trend?: 'up' | 'down' | 'neutral'; unit?: string }
+
+function MetricCardRenderer({ props }: { props: MetricCardProps }) {
+  const trendColor = props.trend ? TREND_COLORS[props.trend] : 'var(--text-muted)'
+  const trendIcon = props.trend ? TREND_ICONS[props.trend] : ''
+  return (
+    <div style={{ background: 'var(--surface-soft)', border: '1px solid var(--panel-border)', borderRadius: 12, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{props.label}</span>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+        <span style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1 }}>{props.value}</span>
+        {props.unit && <span style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 500 }}>{props.unit}</span>}
+      </div>
+      {props.delta && (
+        <span style={{ fontSize: 12, color: trendColor, fontWeight: 600 }}>{trendIcon} {props.delta}</span>
+      )}
+    </div>
+  )
+}
+
+const MetricCard = defineComponent({
+  name: 'MetricCard',
+  description: 'Single KPI card with big value, label, optional delta and trend. Use for financial metrics, research stats, or any key number extracted from documents.',
+  props: z.object({ label: z.string(), value: z.string(), delta: z.string().optional(), trend: z.enum(['up', 'down', 'neutral']).optional(), unit: z.string().optional() }),
+  component: MetricCardRenderer,
+})
+
+// ── StatGrid ──────────────────────────────────────────────────────────────────
+
+type StatGridItem = { label: string; value: string; delta?: string; trend?: 'up' | 'down' | 'neutral'; unit?: string }
+type StatGridProps = { metrics: StatGridItem[]; columns?: 2 | 3 }
+
+function StatGridRenderer({ props }: { props: StatGridProps }) {
+  const cols = props.columns ?? (props.metrics.length >= 3 ? 3 : 2)
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 10 }}>
+      {props.metrics.map((m, i) => {
+        const trendColor = m.trend ? TREND_COLORS[m.trend] : 'var(--text-muted)'
+        const trendIcon = m.trend ? TREND_ICONS[m.trend] : ''
+        return (
+          <div key={i} style={{ background: 'var(--surface-soft)', border: '1px solid var(--panel-border)', borderRadius: 10, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 5 }}>
+            <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{m.label}</span>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+              <span style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1 }}>{m.value}</span>
+              {m.unit && <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{m.unit}</span>}
+            </div>
+            {m.delta && <span style={{ fontSize: 11, color: trendColor, fontWeight: 600 }}>{trendIcon} {m.delta}</span>}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+const StatGrid = defineComponent({
+  name: 'StatGrid',
+  description: 'Grid of 2–3 column KPI metrics. Use for multi-metric dashboards from financial, research, or analytics documents. Each metric has value, label, optional delta and trend.',
+  props: z.object({
+    metrics: z.array(z.object({ label: z.string(), value: z.string(), delta: z.string().optional(), trend: z.enum(['up', 'down', 'neutral']).optional(), unit: z.string().optional() })),
+    columns: z.union([z.literal(2), z.literal(3)]).optional(),
+  }),
+  component: StatGridRenderer,
+})
+
+// ── Timeline ──────────────────────────────────────────────────────────────────
+
+type TimelineEvent = { date: string; title: string; description?: string; status?: 'done' | 'active' | 'pending' }
+type TimelineProps = { events: TimelineEvent[] }
+
+const EVENT_DOT_COLORS: Record<string, string> = { done: 'var(--status-ready)', active: 'var(--accent)', pending: 'var(--text-muted)' }
+
+function TimelineRenderer({ props }: { props: TimelineProps }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 0, paddingLeft: 8 }}>
+      {props.events.map((ev, i) => {
+        const dotColor = ev.status ? EVENT_DOT_COLORS[ev.status] : 'var(--accent)'
+        const isLast = i === props.events.length - 1
+        return (
+          <div key={i} style={{ display: 'flex', gap: 14, position: 'relative' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
+              <div style={{ width: 10, height: 10, borderRadius: '50%', background: dotColor, border: `2px solid color-mix(in srgb, ${dotColor} 40%, transparent)`, flexShrink: 0, marginTop: 4 }} />
+              {!isLast && <div style={{ width: 2, flex: 1, background: 'var(--panel-border)', minHeight: 20, marginTop: 2 }} />}
+            </div>
+            <div style={{ paddingBottom: isLast ? 0 : 16, flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', fontFamily: 'monospace', background: 'var(--surface-recess)', borderRadius: 4, padding: '1px 6px', border: '1px solid var(--panel-border)', flexShrink: 0 }}>{ev.date}</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{ev.title}</span>
+              </div>
+              {ev.description && <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.55 }}>{ev.description}</p>}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+const Timeline = defineComponent({
+  name: 'Timeline',
+  description: 'Chronological event list with date badges, status dots and descriptions. Use for history docs, research evolution, version timelines, or any "what happened when" query.',
+  props: z.object({
+    events: z.array(z.object({ date: z.string(), title: z.string(), description: z.string().optional(), status: z.enum(['done', 'active', 'pending']).optional() })),
+  }),
+  component: TimelineRenderer,
+})
+
+// ── QuoteBlock ────────────────────────────────────────────────────────────────
+
+type QuoteBlockProps = { text: string; author: string; role?: string; docTitle?: string; docId?: string }
+
+function QuoteBlockRenderer({ props }: { props: QuoteBlockProps }) {
+  const triggerAction = useTriggerAction()
+  return (
+    <div style={{ borderLeft: '3px solid var(--accent)', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 10, background: 'var(--surface-recess)', borderRadius: '0 10px 10px 0' }}>
+      <span style={{ fontSize: 36, lineHeight: 1, color: 'var(--accent)', opacity: 0.4, fontFamily: 'Georgia, serif', marginBottom: -8 }}>&ldquo;</span>
+      <blockquote style={{ margin: 0, fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.7, fontStyle: 'italic' }}>{props.text}</blockquote>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 6 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>— {props.author}</span>
+          {props.role && <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{props.role}</span>}
+        </div>
+        {props.docTitle && props.docId && (
+          <button onClick={() => triggerAction(`__cite__:${props.docId}`)} style={{ fontSize: 11, color: 'var(--accent)', background: 'var(--accent-dim)', border: '1px solid var(--accent-ring)', borderRadius: 5, padding: '2px 9px', cursor: 'pointer' }}>
+            {props.docTitle} ↗
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+const QuoteBlock = defineComponent({
+  name: 'QuoteBlock',
+  description: 'Styled pull quote with large quotation marks, author attribution, optional role and source doc link. Use for notable quotes from research papers, books, legal docs, or expert statements.',
+  props: z.object({ text: z.string(), author: z.string(), role: z.string().optional(), docTitle: z.string().optional(), docId: z.string().optional() }),
+  component: QuoteBlockRenderer,
+})
+
+// ── GlossaryBlock ─────────────────────────────────────────────────────────────
+
+type GlossaryTerm = { term: string; definition: string; category?: string }
+type GlossaryBlockProps = { terms: GlossaryTerm[] }
+
+function GlossaryBlockRenderer({ props }: { props: GlossaryBlockProps }) {
+  const triggerAction = useTriggerAction()
+  const sorted = [...props.terms].sort((a, b) => a.term.localeCompare(b.term))
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      {sorted.map((t, i) => (
+        <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '9px 12px', borderRadius: 8, background: i % 2 === 0 ? 'var(--surface-soft)' : 'transparent' }}>
+          <button onClick={() => triggerAction(`Tell me more about ${t.term}`)} style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent)', background: 'var(--accent-dim)', border: '1px solid var(--accent-ring)', borderRadius: 5, padding: '2px 9px', cursor: 'pointer', flexShrink: 0, alignSelf: 'flex-start', whiteSpace: 'nowrap' }}>{t.term}</button>
+          <div style={{ flex: 1 }}>
+            {t.category && <span style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.04em', marginRight: 6 }}>[{t.category}]</span>}
+            <span style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.55 }}>{t.definition}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+const GlossaryBlock = defineComponent({
+  name: 'GlossaryBlock',
+  description: 'Alphabetically sorted term-definition pairs with clickable terms. Use for technical jargon, legal definitions, medical terminology, or any domain vocabulary from documents.',
+  props: z.object({ terms: z.array(z.object({ term: z.string(), definition: z.string(), category: z.string().optional() })) }),
+  component: GlossaryBlockRenderer,
+})
+
+// ── KeyValueGrid ──────────────────────────────────────────────────────────────
+
+type KVPair = { key: string; value: string; icon?: string }
+type KeyValueGridProps = { pairs: KVPair[]; columns?: 2 | 3 }
+
+function KeyValueGridRenderer({ props }: { props: KeyValueGridProps }) {
+  const cols = props.columns ?? 2
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 8 }}>
+      {props.pairs.map((p, i) => (
+        <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, background: 'var(--surface-soft)', border: '1px solid var(--panel-border)', borderRadius: 9, padding: '10px 12px' }}>
+          {p.icon && <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>{p.icon}</span>}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+            <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', lineHeight: 1 }}>{p.key}</span>
+            <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', lineHeight: 1.4, wordBreak: 'break-word' }}>{p.value}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+const KeyValueGrid = defineComponent({
+  name: 'KeyValueGrid',
+  description: 'Grid of key-value metadata pairs with optional emoji icons. Use for document specs, config values, product attributes, or any structured metadata display.',
+  props: z.object({
+    pairs: z.array(z.object({ key: z.string(), value: z.string(), icon: z.string().optional() })),
+    columns: z.union([z.literal(2), z.literal(3)]).optional(),
+  }),
+  component: KeyValueGridRenderer,
+})
+
+// ── RiskMatrix ────────────────────────────────────────────────────────────────
+
+type RiskLevel = 'low' | 'medium' | 'high'
+type RiskItem = { label: string; likelihood: RiskLevel; impact: RiskLevel; description?: string }
+type RiskMatrixProps = { items: RiskItem[] }
+
+const RISK_BG: Record<string, Record<string, string>> = {
+  high:   { high: 'rgba(239,68,68,0.15)',   medium: 'rgba(249,115,22,0.12)', low: 'rgba(234,179,8,0.1)'  },
+  medium: { high: 'rgba(249,115,22,0.12)',  medium: 'rgba(234,179,8,0.1)',   low: 'rgba(34,197,94,0.08)' },
+  low:    { high: 'rgba(234,179,8,0.1)',    medium: 'rgba(34,197,94,0.08)',  low: 'rgba(34,197,94,0.06)' },
+}
+const RISK_BORDER: Record<string, Record<string, string>> = {
+  high:   { high: 'rgba(239,68,68,0.4)',   medium: 'rgba(249,115,22,0.3)',  low: 'rgba(234,179,8,0.25)'  },
+  medium: { high: 'rgba(249,115,22,0.3)',  medium: 'rgba(234,179,8,0.25)', low: 'rgba(34,197,94,0.2)'   },
+  low:    { high: 'rgba(234,179,8,0.25)', medium: 'rgba(34,197,94,0.2)',   low: 'rgba(34,197,94,0.15)'  },
+}
+
+function RiskMatrixRenderer({ props }: { props: RiskMatrixProps }) {
+  const levels: RiskLevel[] = ['high', 'medium', 'low']
+  const cells: Record<string, RiskItem[]> = {}
+  for (const item of props.items) {
+    const key = `${item.likelihood}-${item.impact}`
+    cells[key] = [...(cells[key] ?? []), item]
+  }
+  return (
+    <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+      <span style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600, writingMode: 'vertical-rl', transform: 'rotate(180deg)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '8px 0', flexShrink: 0 }}>LIKELIHOOD</span>
+      <div style={{ flex: 1 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '52px 1fr 1fr 1fr', gap: 4, marginBottom: 4 }}>
+          <div />
+          {['Low Impact', 'Med Impact', 'High Impact'].map((l, i) => (
+            <div key={i} style={{ fontSize: 9, fontWeight: 600, color: 'var(--text-muted)', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{l}</div>
+          ))}
+        </div>
+        {levels.map((likelihood) => (
+          <div key={likelihood} style={{ display: 'grid', gridTemplateColumns: '52px 1fr 1fr 1fr', gap: 4, marginBottom: 4 }}>
+            <div style={{ fontSize: 9, fontWeight: 600, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{likelihood}</div>
+            {levels.map((impact) => {
+              const key = `${likelihood}-${impact}`
+              const cellItems = cells[key] ?? []
+              return (
+                <div key={impact} style={{ background: RISK_BG[likelihood][impact], border: `1px solid ${RISK_BORDER[likelihood][impact]}`, borderRadius: 7, padding: '7px 8px', minHeight: 50, display: 'flex', flexDirection: 'column', gap: 3 }}>
+                  {cellItems.map((item, j) => (
+                    <div key={j} title={item.description} style={{ fontSize: 10, fontWeight: 500, color: 'var(--text-primary)', lineHeight: 1.3 }}>{item.label}</div>
+                  ))}
+                </div>
+              )
+            })}
+          </div>
+        ))}
+        <div style={{ fontSize: 9, color: 'var(--text-muted)', textAlign: 'center', marginTop: 2, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>IMPACT</div>
+      </div>
+    </div>
+  )
+}
+
+const RiskMatrix = defineComponent({
+  name: 'RiskMatrix',
+  description: 'A 3×3 likelihood × impact risk matrix with color-coded zones (red=critical, yellow=medium, green=low). Use for compliance, legal, business strategy, or any risk assessment document.',
+  props: z.object({
+    items: z.array(z.object({ label: z.string(), likelihood: z.enum(['low', 'medium', 'high']), impact: z.enum(['low', 'medium', 'high']), description: z.string().optional() })),
+  }),
+  component: RiskMatrixRenderer,
+})
+
+// ── EntityCard ────────────────────────────────────────────────────────────────
+
+type EntityCardProps = { name: string; role: string; affiliation?: string; description?: string; tags?: string[] }
+
+function EntityCardRenderer({ props }: { props: EntityCardProps }) {
+  const triggerAction = useTriggerAction()
+  const initials = props.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
+  return (
+    <div style={{ background: 'var(--surface-soft)', border: '1px solid var(--panel-border)', borderRadius: 12, padding: '14px 16px', display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+      <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--accent-dim)', border: '2px solid var(--accent-ring)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 15, fontWeight: 700, color: 'var(--accent)' }}>{initials}</div>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
+        <button onClick={() => triggerAction(`Tell me more about ${props.name}`)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}>
+          <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{props.name}</span>
+        </button>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
+          <span style={{ fontSize: 12, color: 'var(--accent)', fontWeight: 500 }}>{props.role}</span>
+          {props.affiliation && <><span style={{ color: 'var(--text-muted)', fontSize: 12 }}>·</span><span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{props.affiliation}</span></>}
+        </div>
+        {props.description && <p style={{ margin: 0, fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.55 }}>{props.description}</p>}
+        {props.tags && props.tags.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 2 }}>
+            {props.tags.map((tag, i) => <span key={i} style={{ fontSize: 10, color: 'var(--text-muted)', background: 'var(--surface-recess)', border: '1px solid var(--panel-border)', borderRadius: 4, padding: '1px 6px' }}>{tag}</span>)}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+const EntityCard = defineComponent({
+  name: 'EntityCard',
+  description: 'Person or organization card with avatar initials, name, role, affiliation, description and expertise tags. Use for research paper authors, legal parties, executives, or key stakeholders mentioned in documents.',
+  props: z.object({ name: z.string(), role: z.string(), affiliation: z.string().optional(), description: z.string().optional(), tags: z.array(z.string()).optional() }),
+  component: EntityCardRenderer,
+})
+
 // ── Assemble library ──────────────────────────────────────────────────────────
 
 const domainComponents: AnyComp[] = [
@@ -291,6 +598,14 @@ const domainComponents: AnyComp[] = [
   TopicCluster,
   ComparisonView,
   ChunkEvidence,
+  MetricCard,
+  StatGrid,
+  Timeline,
+  QuoteBlock,
+  GlossaryBlock,
+  KeyValueGrid,
+  RiskMatrix,
+  EntityCard,
 ]
 
 export const customChatLibrary: Library = createLibrary({
