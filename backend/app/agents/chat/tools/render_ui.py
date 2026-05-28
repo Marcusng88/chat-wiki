@@ -4,7 +4,7 @@ from langchain_core.callbacks.manager import adispatch_custom_event
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import tool
 
-_CATALOG_ID = "https://a2ui.org/specification/v0_9/catalogs/basic/catalog.json"
+_CATALOG_ID = "https://a2ui.org/specification/v0_9/basic_catalog.json"
 
 _KNOWN_COMPONENTS = frozenset({
     "Text", "Image", "Icon", "Video", "AudioPlayer",

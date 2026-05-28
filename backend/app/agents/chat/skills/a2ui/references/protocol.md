@@ -18,12 +18,14 @@ forming a tree. This is called an adjacency list.
 
 ### Required fields on every node
 - `id` — unique string identifier within this surface
-- `component` — one of the 18 basic catalog names (exact spelling, case-sensitive)
+- `component` — one of the 18 basic catalog names (exact spelling, case-sensitive):
+  `Text`, `Image`, `Icon`, `Video`, `AudioPlayer`, `Row`, `Column`, `List`, `Card`, `Tabs`,
+  `Modal`, `Divider`, `Button`, `TextField`, `CheckBox`, `ChoicePicker`, `Slider`, `DateTimeInput`
 
 ### Children
-- `child` — single string (the child's id) — use for components that accept one child
-- `children` — list of strings (children ids) — use for layout containers (Column, Row, List, Tabs)
-- Some components (Text, Icon, Divider, Button, CheckBox, Image) have no children
+- `child` — single string (the child's id) — Card, Modal (trigger/content), Button
+- `children` — list of strings — Row, Column, List (when static)
+- Leaf components (Text, Icon, Divider, Image, Video, AudioPlayer, Button, TextField, CheckBox, ChoicePicker, Slider, DateTimeInput) have no children of their own
 
 ### Root node
 - One node must have `id: "root"` — the renderer starts from here
@@ -44,6 +46,12 @@ forming a tree. This is called an adjacency list.
 The path `/docTitle` resolves to `data_model["docTitle"]`.
 Nested keys use `/a/b/c` syntax — `data_model["a"]["b"]["c"]`.
 
+**Relative path** (inside List templates) — no leading `/`:
+```json
+{"id": "name", "component": "Text", "text": {"path": "name"}}
+```
+Resolves to `current_item["name"]` within the template loop.
+
 ## data_model
 
 A dict of values the component tree references via path bindings.
@@ -62,7 +70,18 @@ Reference with `{"path": "/docTitle"}` or `{"path": "/author/name"}`.
 
 Put all display data here. Keep the component tree structural (layout + binding only).
 
-## Text variant values
+## weight prop
+
+Any component can have a `weight` number — this is flex-grow, applied when the component
+is a direct child of a Row or Column. Use it to create proportional columns:
+
+```python
+{"id": "col-name",   "component": "Text", "text": "Name",   "variant": "caption", "weight": 2},
+{"id": "col-status", "component": "Text", "text": "Status", "variant": "caption", "weight": 1},
+```
+`col-name` takes 2/3 of the space, `col-status` takes 1/3.
+
+## Text variants
 
 | Variant | Rendered as |
 |---|---|
@@ -80,88 +99,100 @@ Put all display data here. Keep the component tree structural (layout + binding 
 {"id": "row", "component": "Row", "justify": "spaceBetween", "align": "center"}
 ```
 
-`justify` — main-axis alignment: `start`, `center`, `end`, `spaceBetween`, `spaceAround`
-`align` — cross-axis alignment: `start`, `center`, `end`, `stretch`
+`justify` — main-axis: `start`, `center`, `end`, `spaceBetween`, `spaceAround`, `spaceEvenly`, `stretch`
+`align` — cross-axis: `start`, `center`, `end`, `stretch`
 
 ## Icon
 
-The `name` field accepts a Material Symbols name (snake_case) or an emoji:
+The `name` field accepts camelCase icon names (converted to snake_case Material Symbol internally).
+Any snake_case Material Symbol name also works directly.
 
 ```json
+{"id": "icon", "component": "Icon", "name": "check"}
+{"id": "icon", "component": "Icon", "name": "arrowBack"}
 {"id": "icon", "component": "Icon", "name": "check_circle"}
-{"id": "icon", "component": "Icon", "name": "⚠️"}
 ```
 
-Common Material Symbol names: `check_circle`, `warning`, `info`, `trending_up`,
-`arrow_upward`, `arrow_downward`, `document_scanner`, `topic`, `description`,
-`compare_arrows`, `library_books`, `search`, `close`, `done`, `format_quote`, `schedule`
-
-## Button
-
-```json
-{
-  "id": "btn",
-  "component": "Button",
-  "label": "Open document",
-  "variant": "outlined"
-}
-```
-
-`variant`: `filled` (default), `outlined`, `text`
-
-## Image
-
-```json
-{
-  "id": "img",
-  "component": "Image",
-  "url": {"path": "/thumbnailUrl"},
-  "variant": "mediumFeature",
-  "fit": "cover"
-}
-```
-
-`variant`: `icon`, `avatar`, `smallFeature`, `mediumFeature`, `largeFeature`, `header`
-`fit`: `contain`, `cover`, `fill`, `none`, `scaleDown`
-
-## List
+## List — static children
 
 ```json
 {"id": "list", "component": "List", "children": ["item1", "item2", "item3"]}
 ```
 
-Each child is rendered as a list item. Orientation defaults to vertical.
+`direction`: `vertical` (default) or `horizontal`
+
+## List — template children (data-driven)
+
+Renders one copy of the template component per item in the data array.
+Within the template, use relative paths (no `/` prefix) to access item fields.
+
+```python
+{"id": "doc-list", "component": "List", "children": {"componentId": "doc-row", "path": "/docs"}},
+{"id": "doc-row",  "component": "Row",  "children": ["r-name", "r-status"], "align": "center"},
+{"id": "r-name",   "component": "Text", "text": {"path": "name"},   "variant": "body",    "weight": 2},
+{"id": "r-status", "component": "Text", "text": {"path": "status"}, "variant": "caption", "weight": 1},
+# data_model: {"docs": [{"name": "BERT", "status": "ready"}, ...]}
+```
 
 ## Tabs
+
+`tabs` is a list of objects with `title` (string) and `child` (component ID):
 
 ```json
 {
   "id": "tabs",
   "component": "Tabs",
   "tabs": [
-    {"label": "Summary",   "child": "summary-col"},
-    {"label": "Evidence",  "child": "evidence-col"}
+    {"title": "Summary",   "child": "summary-col"},
+    {"title": "Evidence",  "child": "evidence-col"}
   ]
 }
 ```
 
-Each tab has a `label` (string) and a `child` (id of the content node).
+## Modal
 
-## Divider
+Needs a `trigger` (component ID that opens the modal) and `content` (component ID shown inside):
 
 ```json
-{"id": "div", "component": "Divider"}
+{"id": "modal",     "component": "Modal",  "trigger": "open-btn", "content": "modal-body"},
+{"id": "open-btn",  "component": "Button", "child": "btn-lbl"},
+{"id": "btn-lbl",   "component": "Text",   "text": "Details", "variant": "body"},
+{"id": "modal-body","component": "Text",   "text": {"path": "/details"}, "variant": "body"}
 ```
 
-No additional props needed.
+## Button
+
+Button renders its `child` component as the label. `action` is optional for display-only surfaces:
+
+```json
+{
+  "id": "btn",
+  "component": "Button",
+  "child": "btn-lbl",
+  "variant": "primary"
+}
+```
+
+`variant`: `default` (default), `primary`, `borderless`
 
 ## CheckBox
+
+`value` (boolean or path) controls checked state — use `value`, NOT `checked`:
 
 ```json
 {
   "id": "cb1",
   "component": "CheckBox",
   "label": "Select this document",
-  "checked": {"path": "/selected"}
+  "value": {"path": "/selected"}
 }
+```
+
+## Divider
+
+`axis` optional — `"horizontal"` (default) or `"vertical"`:
+
+```json
+{"id": "div", "component": "Divider"}
+{"id": "vdiv", "component": "Divider", "axis": "vertical"}
 ```

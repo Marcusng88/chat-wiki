@@ -3,6 +3,7 @@
 import { create } from 'zustand'
 import { useShallow } from 'zustand/react/shallow'
 import { createClient } from '@/lib/supabase'
+import { resetA2uiProcessor } from '@/lib/a2uiProcessor'
 import type { Document, Message } from '@/lib/types'
 
 interface AppState {
@@ -64,6 +65,7 @@ export const useAppStore = create<AppState & AppActions>()((set) => ({
     })),
 
   clearMessages: async () => {
+    resetA2uiProcessor()
     const supabase = createClient()
     const { data: { session } } = await supabase.auth.getSession()
     const userId = session?.user?.id ?? 'anon'

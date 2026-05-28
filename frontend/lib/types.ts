@@ -109,8 +109,7 @@ export interface A2UIMessage {
   id: string
   role: 'a2ui'
   ts: string
-  component: string
-  data: Record<string, unknown>
+  surfaceId: string
 }
 
 export type Message = UserMessage | AgentMessage | TypingMessage | HITLMessage | A2UIMessage

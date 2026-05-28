@@ -29,22 +29,40 @@ If render_ui returns a validation error:
 3. Call render_ui again with the corrected arguments.
 4. Retry up to 3 times total. If still failing, return the error string.
 
-## Output formatting rules
+## Markdown rendering in Text components
 
-Any markdown content placed in data_model fields (e.g. content, answer, excerpt)
-is rendered via react-markdown + remark-gfm + KaTeX on the frontend.
+Text.text content is rendered by @a2ui/markdown-it (markdownit default settings).
 
-Math — use only:
-- Inline: `$...$`
-- Display block: `$$...$$`
-Never use `\[...\]`, `\(...\)`, or bare LaTeX — renders as raw text.
+Supported:
+- **bold**, *italic*, headings (#/##/###), bullet lists (- item), ordered lists (1. item)
+- inline code (`code`), fenced code blocks with language tag (```python)
+- [links](url)
 
-Code blocks — always include a language tag:
+NOT supported — will render as raw characters:
+- GFM pipe tables: | col | col | — renders as literal | characters, NOT a table
+- Strikethrough (~~text~~)
+- Math / LaTeX ($...$ or $$...$$) — NOT supported, renders as raw text
+
+## Tabular data — never use pipe tables in Text
+
+There is NO Table component. Do NOT put | pipe table syntax in Text.text.
+For tabular/grid data, build a header Row + data Rows using the List template pattern:
+
 ```python
-# code here
+# Header row with weighted columns
+{"id": "hdr",      "component": "Row",  "children": ["h1","h2","h3"]},
+{"id": "h1",       "component": "Text", "text": "Name",   "variant": "caption", "weight": 2},
+{"id": "h2",       "component": "Text", "text": "Type",   "variant": "caption", "weight": 1},
+{"id": "h3",       "component": "Text", "text": "Status", "variant": "caption", "weight": 1},
+# Data rows via List template
+{"id": "rows",     "component": "List", "children": {"componentId": "row-tmpl", "path": "/items"}},
+{"id": "row-tmpl", "component": "Row",  "children": ["r-name","r-type","r-status"]},
+{"id": "r-name",   "component": "Text", "text": {"path": "name"},   "variant": "body",    "weight": 2},
+{"id": "r-type",   "component": "Text", "text": {"path": "type"},   "variant": "caption", "weight": 1},
+{"id": "r-status", "component": "Text", "text": {"path": "status"}, "variant": "caption", "weight": 1},
 ```
 
-No raw HTML. No footnotes (`[^1]` not supported).
+data_model: `{"items": [{"name": "...", "type": "...", "status": "..."}, ...]}`
 
 ## Do not
 
@@ -52,3 +70,4 @@ No raw HTML. No footnotes (`[^1]` not supported).
 - Call render_ui more than once
 - Ask the user questions
 - Return anything other than 'rendered' after a successful call
+- Put GFM tables or math inside Text.text content

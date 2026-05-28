@@ -311,3 +311,24 @@ input:focus-visible {
   color: var(--text-primary);
 }
 .md tr:nth-child(even) td { background: rgba(0,0,0,0.08); }
+
+/* A2UI loading placeholder */
+.a2ui-loading {
+  display: flex;
+  align-items: center;
+  padding: 12px 0;
+  gap: 4px;
+}
+
+.a2ui-loading-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-muted, #888);
+  animation: a2ui-pulse 1s ease-in-out infinite;
+}
+
+@keyframes a2ui-pulse {
+  0%, 100% { opacity: 0.3; }
+  50%       { opacity: 1; }
+}

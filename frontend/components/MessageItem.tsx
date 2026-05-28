@@ -53,7 +53,7 @@ export default function MessageItem({ msg, onOpenDoc, onResolveHitl, onQuery, su
           <span>agent</span>
           <span className="ts">{msg.ts}</span>
         </div>
-        <A2UIRenderer component={msg.component} data={msg.data} onOpenDoc={onOpenDoc} onQuery={onQuery} />
+        <A2UIRenderer surfaceId={msg.surfaceId} />
       </div>
     )
   }

@@ -36,6 +36,11 @@ export default function RootLayout({
             __html: `(function(){try{var t=localStorage.getItem('cw:theme')||'dark';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();`,
           }}
         />
+        {/* Material Symbols for A2UI Icon component */}
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+        />
       </head>
       <body className="h-full">{children}</body>
     </html>
