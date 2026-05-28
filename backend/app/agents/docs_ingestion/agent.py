@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from deepagents import HarnessProfile, create_deep_agent, register_harness_profile
+from deepagents import create_deep_agent
 from langchain.agents.middleware import ModelRetryMiddleware, ToolRetryMiddleware
 
 from app.agents.docs_ingestion.tools.chunking import chunk_and_embed
@@ -11,13 +11,6 @@ from app.agents.docs_ingestion.tools.wiki import read_chunks_batch, save_wiki
 from app.utils.model_provider import get_llm
 
 _AGENTS_MD = str(Path(__file__).parent / "AGENTS.md")
-
-register_harness_profile(
-    "openai:gpt-5.4-nano-2026-03-17",
-    HarnessProfile(
-        excluded_tools=frozenset({"ls", "read_file", "write_file", "edit_file", "glob", "grep"}),
-    ),
-)
 
 
 def build_document_processor_agent():
