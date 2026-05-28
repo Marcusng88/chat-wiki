@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@import "@openuidev/react-ui/components.css";
+@import "@openuidev/react-ui/defaults.css";
 @import "./styles/_layout.css";
 @import "./styles/_header.css";
 @import "./styles/_left-panel.css";

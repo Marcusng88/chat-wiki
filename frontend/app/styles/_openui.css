@@ -3,4 +3,25 @@
   border-radius: 12px;
   overflow: hidden;
   animation: cardIn 0.2s ease;
+
+  /* map project dark tokens → openui vars */
+  --openui-background: var(--panel-bg);
+  --openui-foreground: var(--panel-bg-elev);
+  --openui-text-neutral-primary: var(--text-primary);
+  --openui-text-neutral-secondary: var(--text-secondary);
+  --openui-text-neutral-tertiary: var(--text-muted);
+  --openui-border-default: var(--panel-border);
+  --openui-border-interactive: var(--panel-border-strong);
+  --openui-interactive-accent-default: var(--accent);
+}
+
+[data-theme="light"] .openui-block {
+  --openui-background: var(--panel-bg);
+  --openui-foreground: var(--panel-bg-elev);
+  --openui-text-neutral-primary: var(--text-primary);
+  --openui-text-neutral-secondary: var(--text-secondary);
+  --openui-text-neutral-tertiary: var(--text-muted);
+  --openui-border-default: var(--panel-border);
+  --openui-border-interactive: var(--panel-border-strong);
+  --openui-interactive-accent-default: var(--accent);
 }
