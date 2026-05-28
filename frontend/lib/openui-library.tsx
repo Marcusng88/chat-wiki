@@ -1,6 +1,9 @@
 'use client'
-import { createLibrary, defineComponent, useTriggerAction, type DefinedComponent, type Library } from '@openuidev/react-lang'
+import { useState, useRef, useEffect, useCallback, type ReactNode } from 'react'
+import { createLibrary, defineComponent, useTriggerAction, useIsStreaming, type DefinedComponent, type Library } from '@openuidev/react-lang'
 import { openuiChatLibrary, openuiChatComponentGroups } from '@openuidev/react-ui/genui-lib'
+import * as AccordionPrimitive from '@radix-ui/react-accordion'
+import { ChevronRight } from 'lucide-react'
 import { z } from 'zod'
 import Markdown from '@/components/Markdown'
 
@@ -10,6 +13,97 @@ type AnyComp = DefinedComponent<any>
 const allComps = Object.values(
   (openuiChatLibrary as unknown as { components: Record<string, AnyComp> }).components
 )
+
+// Fixed SectionBlock — same logic as OpenUI built-in but trigger uses <span> not <button>
+// (built-in puts IconButton/<button> inside AccordionTrigger/<button> → nested button error)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type SBProps = { props: { sections?: any[]; isFoldable?: boolean }; renderNode: (v: unknown) => ReactNode }
+
+function SectionBlockFixed({ props, renderNode }: SBProps) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const items: any[] = props.sections ?? []
+  const isFoldable = props.isFoldable !== false
+  const isStreaming = useIsStreaming()
+  const firstItemValue = items[0]?.props?.value
+  const [openItems, setOpenItems] = useState<string[]>([])
+  const userSelected = useRef(false)
+  const prevLengthRef = useRef(0)
+  const prevIsStreaming = useRef(isStreaming)
+
+  useEffect(() => {
+    if (items.length === 0) return
+    if (isStreaming && items.length > prevLengthRef.current && !userSelected.current) {
+      const last = items[items.length - 1]
+      const lastValue = last?.props?.value
+      if (lastValue) setOpenItems(prev => prev.includes(lastValue) ? prev : [...prev, lastValue])
+    } else {
+      setOpenItems(prev => prev.length === 0 && firstItemValue ? [firstItemValue] : prev)
+    }
+    prevLengthRef.current = items.length
+  }, [items.length, isStreaming, firstItemValue])
+
+  useEffect(() => {
+    if (prevIsStreaming.current && !isStreaming && !userSelected.current && items.length > 0) {
+      setOpenItems(firstItemValue ? [firstItemValue] : [])
+    }
+    prevIsStreaming.current = isStreaming
+    // intentionally omit firstItemValue/items.length — mirrors official OpenUI impl
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isStreaming])
+
+  const handleValueChange = useCallback((value: string[]) => {
+    userSelected.current = true
+    setOpenItems(value ?? [])
+  }, [])
+
+  if (!isFoldable) {
+    return (
+      <>
+        {items.map((item, index) => (
+          <div key={index} className="openui-section-v2">
+            <div className="openui-section-v2-wrapper">
+              <div role="separator" style={{ height: 1, background: 'currentColor', opacity: 0.15 }} />
+              <div className="openui-section-v2-header">
+                <div className="openui-section-v2-header-trigger">{String(item?.props?.trigger ?? '')}</div>
+              </div>
+              <div className="openui-section-v2-content">{renderNode(item?.props?.content)}</div>
+            </div>
+          </div>
+        ))}
+      </>
+    )
+  }
+
+  return (
+    <AccordionPrimitive.Root
+      type="multiple"
+      value={openItems}
+      onValueChange={handleValueChange}
+      className="openui-foldable-section-root"
+    >
+      {items.map((item, index) => (
+        <AccordionPrimitive.Item key={index} value={String(item?.props?.value ?? index)} className="openui-foldable-section-item">
+          <AccordionPrimitive.Header className="openui-foldable-section-header">
+            <AccordionPrimitive.Trigger className="openui-foldable-section-trigger">
+              <div className="openui-foldable-section-trigger-content-wrapper">
+                <div role="separator" className="openui-foldable-section-trigger-content-separator" style={{ height: 1, background: 'currentColor', opacity: 0.15 }} />
+                <div className="openui-foldable-section-trigger-content-icon-button-wrapper">
+                  <span className="openui-foldable-section-trigger-content-icon-button" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <ChevronRight size={12} className="openui-foldable-section-trigger-content-icon-button-icon" />
+                  </span>
+                  <div className="openui-foldable-section-trigger-content-text">{String(item?.props?.trigger ?? '')}</div>
+                </div>
+              </div>
+            </AccordionPrimitive.Trigger>
+          </AccordionPrimitive.Header>
+          <AccordionPrimitive.Content className="openui-foldable-section-content">
+            {renderNode(item?.props?.content)}
+          </AccordionPrimitive.Content>
+        </AccordionPrimitive.Item>
+      ))}
+    </AccordionPrimitive.Root>
+  )
+}
 
 // Swap built-in text renderers with our Markdown component (rehype-katex + cite handler)
 const baseComponents = allComps.map((c): AnyComp => {
@@ -24,6 +118,9 @@ const baseComponents = allComps.map((c): AnyComp => {
       ...c,
       component: ({ props }: { props: { textMarkdown: string } }) => <Markdown md={props.textMarkdown} />,
     } as AnyComp
+  }
+  if (c.name === 'SectionBlock') {
+    return { ...c, component: SectionBlockFixed } as AnyComp
   }
   return c
 })
@@ -431,7 +528,7 @@ type GlossaryBlockProps = { terms: GlossaryTerm[] }
 
 function GlossaryBlockRenderer({ props }: { props: GlossaryBlockProps }) {
   const triggerAction = useTriggerAction()
-  const sorted = [...props.terms].sort((a, b) => a.term.localeCompare(b.term))
+  const sorted = [...props.terms].sort((a, b) => (a.term ?? '').localeCompare(b.term ?? ''))
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       {sorted.map((t, i) => (
