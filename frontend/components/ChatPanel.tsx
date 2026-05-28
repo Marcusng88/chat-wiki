@@ -6,12 +6,6 @@ import { useChat } from '@/lib/hooks/useChat'
 import MessageItem from './MessageItem'
 import { Plus, Send } from './Icons'
 
-const SUGGESTIONS = [
-  'summarize my notes on attention variants',
-  'what changed between april and may decisions?',
-  'find every mention of HITL approval flow',
-]
-
 export default function ChatPanel() {
   const {
     messages,
@@ -90,10 +84,6 @@ export default function ChatPanel() {
 
       <div className="chat-body" ref={bodyRef}>
         {messages.map((m, idx) => {
-          const isLastAgent =
-            m.role === 'agent' &&
-            !isStreaming &&
-            messages.slice(idx + 1).every((x) => x.role !== 'agent' && x.role !== 'hitl' && x.role !== 'typing')
           return (
             <MessageItem
               key={m.id}
@@ -101,7 +91,6 @@ export default function ChatPanel() {
               onOpenDoc={openDoc}
               onResolveHitl={resolveHITL}
               onQuery={send}
-              suggestions={isLastAgent ? SUGGESTIONS.map((s) => ({ text: s, onPick: send })) : null}
             />
           )
         })}

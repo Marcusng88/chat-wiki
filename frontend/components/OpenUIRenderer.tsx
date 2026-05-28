@@ -1,6 +1,6 @@
 'use client'
 import { Renderer } from '@openuidev/react-lang'
-import { openuiLibrary } from '@openuidev/react-ui/genui-lib'
+import { openuiChatLibrary } from '@openuidev/react-ui/genui-lib'
 
 interface Props {
   content: string
@@ -12,7 +12,7 @@ export default function OpenUIRenderer({ content, isStreaming = false, onAction 
   return (
     <Renderer
       response={content}
-      library={openuiLibrary}
+      library={openuiChatLibrary}
       isStreaming={isStreaming}
       onAction={onAction}
     />

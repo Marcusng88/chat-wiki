@@ -25,7 +25,7 @@ _checkpointer = MemorySaver()
 
 def build_chat_agent() -> LangGraphAgent:
     graph = create_deep_agent(
-        model=get_llm(),
+        model=get_llm(temperature=0.7),
         tools=[
             list_docs,
             search_documents,

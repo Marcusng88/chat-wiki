@@ -3,18 +3,11 @@ import { useCallback } from 'react'
 import type { AgentMessage, Message, MessageSource, TextBlock } from '@/lib/types'
 import { useAppStore } from '@/store/useAppStore'
 import Markdown from './Markdown'
-import SourcePill from './SourcePill'
 import HITLCard from './HITLCard'
 import OpenUIRenderer from './OpenUIRenderer'
-import { Sparkle } from './Icons'
 
 function isOpenUILang(text: string): boolean {
   return /^\s*root\s*=\s*\w+\s*\(/.test(text)
-}
-
-export interface Suggestion {
-  text: string
-  onPick: (text: string) => void
 }
 
 interface Props {
@@ -22,19 +15,23 @@ interface Props {
   onOpenDoc?: (docId: string) => void
   onResolveHitl?: (choice: string, notes?: string) => void
   onQuery?: (text: string) => void
-  suggestions?: Suggestion[] | null
 }
 
-export default function MessageItem({ msg, onOpenDoc, onResolveHitl, onQuery, suggestions }: Props) {
+export default function MessageItem({ msg, onOpenDoc, onResolveHitl, onQuery }: Props) {
   const openDoc = onOpenDoc ?? (() => {})
   const isStreaming = useAppStore((s) => s.isStreaming)
 
   const handleAction = useCallback((event: unknown) => {
-    const e = event as { type: string; payload?: { message?: string } }
-    if (e.type === 'continue_conversation' && e.payload?.message && onQuery) {
-      onQuery(e.payload.message)
+    const e = event as { type: string; humanFriendlyMessage?: string }
+    if (e.type === 'continue_conversation' && e.humanFriendlyMessage) {
+      const msg = e.humanFriendlyMessage
+      if (msg.startsWith('__cite__:') && onOpenDoc) {
+        onOpenDoc(msg.slice(9))
+        return
+      }
+      if (onQuery) onQuery(msg)
     }
-  }, [onQuery])
+  }, [onQuery, onOpenDoc])
 
   if (msg.role === 'user') {
     return (
@@ -103,30 +100,6 @@ export default function MessageItem({ msg, onOpenDoc, onResolveHitl, onQuery, su
               sources={agentMsg.sources}
             />
           )
-        )}
-        {agentMsg.sources && agentMsg.sources.length > 0 && (
-          <div className="sources-row">
-            <span className="sources-label">sources</span>
-            {agentMsg.sources.map((s) => (
-              <SourcePill key={s.idx} src={s} onOpen={openDoc} />
-            ))}
-          </div>
-        )}
-        {suggestions && suggestions.length > 0 && (
-          <div className="followup-tray">
-            <div className="suggestion-label">
-              <Sparkle />
-              <span>follow up</span>
-            </div>
-            <div className="suggestion-chips">
-              {suggestions.map((s) => (
-                <button key={s.text} className="suggestion-chip" onClick={() => s.onPick(s.text)}>
-                  <span className="arrow">↗</span>
-                  <span>{s.text}</span>
-                </button>
-              ))}
-            </div>
-          </div>
         )}
       </div>
     </div>
