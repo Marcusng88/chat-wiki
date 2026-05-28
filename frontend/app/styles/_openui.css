@@ -1,0 +1,6 @@
+.openui-block {
+  margin: 8px 0;
+  border-radius: 12px;
+  overflow: hidden;
+  animation: cardIn 0.2s ease;
+}

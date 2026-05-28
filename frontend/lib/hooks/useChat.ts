@@ -4,7 +4,6 @@ import { EventType } from '@ag-ui/client'
 import { createChatAgent } from '@/lib/agentClient'
 import { createClient } from '@/lib/supabase'
 import { useAppStore } from '@/store/useAppStore'
-import { getA2uiProcessor } from '@/lib/a2uiProcessor'
 import type { AgentMessage, HITLMessage, TextBlock, UserMessage } from '@/lib/types'
 
 const CONFLICT_LABELS: Record<string, string> = {
@@ -90,21 +89,6 @@ export function useChat() {
               break
             }
 
-            if (event.name !== 'a2ui_message') break
-
-            const val = event.value as Record<string, unknown>
-            const processor = getA2uiProcessor()
-
-            if (val.createSurface) {
-              const { surfaceId } = val.createSurface as { surfaceId: string }
-              processor.processMessages([val as any]) // eslint-disable-line @typescript-eslint/no-explicit-any
-              const turnId = ensureTurn()
-              addBlock(turnId, { type: 'a2ui', surfaceId })
-            } else if (val.updateComponents) {
-              processor.processMessages([val as any]) // eslint-disable-line @typescript-eslint/no-explicit-any
-            } else if (val.updateDataModel) {
-              processor.processMessages([val as any]) // eslint-disable-line @typescript-eslint/no-explicit-any
-            }
             break
           }
 

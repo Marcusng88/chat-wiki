@@ -87,12 +87,7 @@ export interface TextBlock {
   md: string
 }
 
-export interface A2UIBlock {
-  type: 'a2ui'
-  surfaceId: string
-}
-
-export type Block = TextBlock | A2UIBlock
+export type Block = TextBlock
 
 export interface AgentMessage {
   id: string

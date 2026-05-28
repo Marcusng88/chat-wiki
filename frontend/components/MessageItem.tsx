@@ -1,10 +1,16 @@
 'use client'
+import { useCallback } from 'react'
 import type { AgentMessage, Message, MessageSource, TextBlock } from '@/lib/types'
+import { useAppStore } from '@/store/useAppStore'
 import Markdown from './Markdown'
 import SourcePill from './SourcePill'
 import HITLCard from './HITLCard'
-import A2UIRenderer from './A2UIRenderer'
+import OpenUIRenderer from './OpenUIRenderer'
 import { Sparkle } from './Icons'
+
+function isOpenUILang(text: string): boolean {
+  return /^\s*root\s*=\s*\w+\s*\(/.test(text)
+}
 
 export interface Suggestion {
   text: string
@@ -21,6 +27,14 @@ interface Props {
 
 export default function MessageItem({ msg, onOpenDoc, onResolveHitl, onQuery, suggestions }: Props) {
   const openDoc = onOpenDoc ?? (() => {})
+  const isStreaming = useAppStore((s) => s.isStreaming)
+
+  const handleAction = useCallback((event: unknown) => {
+    const e = event as { type: string; payload?: { message?: string } }
+    if (e.type === 'continue_conversation' && e.payload?.message && onQuery) {
+      onQuery(e.payload.message)
+    }
+  }, [onQuery])
 
   if (msg.role === 'user') {
     return (
@@ -70,7 +84,15 @@ export default function MessageItem({ msg, onOpenDoc, onResolveHitl, onQuery, su
       </div>
       <div className="msg-bubble">
         {agentMsg.blocks.map((block) =>
-          block.type === 'text' ? (
+          isOpenUILang((block as TextBlock).md) ? (
+            <div key={(block as TextBlock).id} className="openui-block">
+              <OpenUIRenderer
+                content={(block as TextBlock).md}
+                isStreaming={isStreaming}
+                onAction={handleAction}
+              />
+            </div>
+          ) : (
             <Markdown
               key={(block as TextBlock).id}
               md={(block as TextBlock).md}
@@ -80,10 +102,6 @@ export default function MessageItem({ msg, onOpenDoc, onResolveHitl, onQuery, su
               }}
               sources={agentMsg.sources}
             />
-          ) : (
-            <div key={block.surfaceId} className="a2ui-block">
-              <A2UIRenderer surfaceId={block.surfaceId} />
-            </div>
           )
         )}
         {agentMsg.sources && agentMsg.sources.length > 0 && (
