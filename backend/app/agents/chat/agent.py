@@ -17,7 +17,7 @@ from app.agents.chat.tools import (
 from app.utils.model_provider import get_llm
 
 _AGENTS_MD = str(Path(__file__).parent / "AGENTS.md")
-_OPENUI_PROMPT_FILE = str(Path(__file__).parent / "openui_system_prompt.txt")
+_OPENUI_PROMPT_FILE = str(Path(__file__).parent / "openui_system_prompt.md")
 _BACKEND_ROOT = FilesystemBackend(root_dir=str(Path(__file__).parent), virtual_mode=True)
 
 _checkpointer = MemorySaver()
