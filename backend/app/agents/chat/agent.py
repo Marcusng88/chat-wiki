@@ -6,7 +6,6 @@ from langchain.agents.middleware import ModelRetryMiddleware
 from langgraph.checkpoint.memory import MemorySaver
 from ag_ui_langgraph import LangGraphAgent
 
-from app.agents.chat.subagents import A2UI_SUBAGENT
 from app.agents.chat.tools import (
     list_docs,
     search_documents,
@@ -18,6 +17,7 @@ from app.agents.chat.tools import (
 from app.utils.model_provider import get_llm
 
 _AGENTS_MD = str(Path(__file__).parent / "AGENTS.md")
+_OPENUI_PROMPT_FILE = str(Path(__file__).parent / "openui_system_prompt.txt")
 _BACKEND_ROOT = FilesystemBackend(root_dir=str(Path(__file__).parent), virtual_mode=True)
 
 _checkpointer = MemorySaver()
@@ -34,8 +34,8 @@ def build_chat_agent() -> LangGraphAgent:
             check_conflicts,
             resolve_conflict,
         ],
-        subagents=[A2UI_SUBAGENT],
-        memory=[_AGENTS_MD],
+        subagents=[],
+        memory=[_AGENTS_MD, _OPENUI_PROMPT_FILE],
         backend=_BACKEND_ROOT,
         middleware=[ModelRetryMiddleware(max_retries=3, backoff_factor=2.0)],
         checkpointer=_checkpointer,

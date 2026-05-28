@@ -1,0 +1,4 @@
+# PLACEHOLDER — regenerate after frontend pnpm install
+#
+# From frontend/ directory:
+#   node -e "import('@openuidev/react-ui/genui-lib').then(({ openuiLibrary, openuiPromptOptions }) => { console.log(openuiLibrary.prompt(openuiPromptOptions)) })" > ../backend/app/agents/chat/openui_system_prompt.txt
