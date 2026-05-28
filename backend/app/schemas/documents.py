@@ -2,6 +2,8 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
+from app.schemas.enums import DocumentStatus
+
 
 class PresignRequest(BaseModel):
     filename: str
@@ -22,7 +24,7 @@ class DocumentResponse(BaseModel):
     id: str
     title: str
     file_type: str
-    status: str
+    status: DocumentStatus
     has_conflict: bool
     created_at: datetime
     wiki_page: str | None = None

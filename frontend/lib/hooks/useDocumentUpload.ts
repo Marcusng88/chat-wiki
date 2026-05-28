@@ -1,13 +1,13 @@
 'use client'
 
 import { useCallback } from 'react'
-import { useAppStore } from '@/store/useAppStore'
+import { useDocumentStore } from '@/store/useDocumentStore'
 import { presignDocument, uploadToStorage, confirmDocument } from '@/lib/api'
 import { fileTypeFromExtension, fileTypeToApi } from '@/lib/types'
 import type { Document } from '@/lib/types'
 
 export function useDocumentUpload() {
-  const setDocuments = useAppStore((s) => s.setDocuments)
+  const setDocuments = useDocumentStore((s) => s.setDocuments)
 
   const upload = useCallback(async (files: File[]) => {
     for (const file of files) {

@@ -1,7 +1,8 @@
 'use client'
 
 import { useCallback } from 'react'
-import { useAppStore, useActiveConflicts } from '@/store/useAppStore'
+import { useDocumentStore, useActiveConflicts } from '@/store/useDocumentStore'
+import { useUIStore } from '@/store/useUIStore'
 import { useConfirm } from '@/lib/hooks/useConfirm'
 import { useDocuments } from '@/lib/hooks/useDocuments'
 import { useDocumentUpload } from '@/lib/hooks/useDocumentUpload'
@@ -19,9 +20,8 @@ export default function LeftPanel() {
     selectedDocId,
     openDocument,
     backToList,
-    leftCollapsed,
-    setLeftCollapsed,
-  } = useAppStore()
+  } = useDocumentStore()
+  const { leftCollapsed, setLeftCollapsed, setMobileDrawerOpen } = useUIStore()
   const activeConflicts = useActiveConflicts()
   const requestConfirm = useConfirm()
   const selectedDoc = documents.find((d) => d.id === selectedDocId)
@@ -114,6 +114,7 @@ export default function LeftPanel() {
                   onClick={(id) => {
                     if (leftCollapsed) onToggleCollapsed()
                     openDocument(id)
+                    setMobileDrawerOpen(false)
                   }}
                   onDelete={onDelete}
                   collapsed={leftCollapsed}

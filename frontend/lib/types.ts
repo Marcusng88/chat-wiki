@@ -1,47 +1,50 @@
-export type FileType = 'pdf' | 'md' | 'txt' | 'pptx' | 'img'
+export type { DocumentStatus, FileType } from './contract/document'
+export { DOCUMENT_STATUS, FILE_TYPE, PROCESSING_STATUSES } from './contract/document'
+
+import type { FileType } from './contract/document'
+import { FILE_TYPE } from './contract/document'
 
 const _EXT_MAP: Record<string, FileType> = {
-  pdf: 'pdf', md: 'md', txt: 'txt', pptx: 'pptx',
-  png: 'img', jpg: 'img', jpeg: 'img', webp: 'img',
+  pdf: FILE_TYPE.PDF,
+  md: FILE_TYPE.MD,
+  txt: FILE_TYPE.TXT,
+  pptx: FILE_TYPE.PPTX,
+  png: FILE_TYPE.IMG,
+  jpg: FILE_TYPE.IMG,
+  jpeg: FILE_TYPE.IMG,
+  webp: FILE_TYPE.IMG,
 }
 
 const _API_MAP: Record<string, FileType> = {
-  pdf: 'pdf', md: 'md', txt: 'txt', pptx: 'pptx', image: 'img',
+  pdf: FILE_TYPE.PDF,
+  md: FILE_TYPE.MD,
+  txt: FILE_TYPE.TXT,
+  pptx: FILE_TYPE.PPTX,
+  image: FILE_TYPE.IMG,
 }
 
 export const FILE_TYPE_ICON_CLASS: Record<FileType, string> = {
-  pdf: 'ftype-pdf', md: 'ftype-md', txt: 'ftype-txt', pptx: 'ftype-pptx', img: 'ftype-img',
+  pdf: 'ftype-pdf',
+  md: 'ftype-md',
+  txt: 'ftype-txt',
+  pptx: 'ftype-pptx',
+  img: 'ftype-img',
 }
 
 export function fileTypeFromExtension(filename: string): FileType {
   const ext = (filename.split('.').pop() ?? '').toLowerCase()
-  return _EXT_MAP[ext] ?? 'txt'
+  return _EXT_MAP[ext] ?? FILE_TYPE.TXT
 }
 
 export function fileTypeFromApi(apiType: string): FileType {
-  return _API_MAP[apiType] ?? 'txt'
+  return _API_MAP[apiType] ?? FILE_TYPE.TXT
 }
 
 export function fileTypeToApi(fileType: FileType): string {
-  return fileType === 'img' ? 'image' : fileType
+  return fileType === FILE_TYPE.IMG ? 'image' : fileType
 }
 
-export type DocumentStatus =
-  | 'uploading'          // frontend-only: XHR PUT in progress
-  | 'uploaded'           // in DB, ingestion not started
-  | 'extracting'
-  | 'chunking'
-  | 'embedding'
-  | 'generating_wiki'
-  | 'indexing'
-  | 'conflict_scan'
-  | 'ready'
-  | 'failed_extraction'
-  | 'failed_embedding'
-  | 'failed_wiki'
-  | 'failed_indexing'
-  | 'unsupported'
-  | 'failed'             // frontend-only: upload error before DB record created
+import type { DocumentStatus } from './contract/document'
 
 export interface Document {
   id: string
@@ -74,21 +77,6 @@ export interface HITLSource {
   date: string
 }
 
-export interface UserMessage {
-  id: string
-  role: 'user'
-  content: string
-  ts: string
-}
-
-export interface TextBlock {
-  type: 'text'
-  id: string
-  md: string
-}
-
-export type Block = TextBlock
-
 export interface ToolCallStep {
   id: string
   name: string
@@ -96,9 +84,30 @@ export interface ToolCallStep {
   status: 'streaming' | 'done'
 }
 
-export interface AgentMessage {
+export interface OpenUIBlock {
+  type: 'openui'
   id: string
+  content: string
+}
+
+export interface ErrorBlock {
+  type: 'error'
+  id: string
+  message: string
+}
+
+export type Block = OpenUIBlock | ErrorBlock
+
+export interface UserMessage {
+  role: 'user'
+  id: string
+  content: string
+  ts: string
+}
+
+export interface AgentMessage {
   role: 'agent'
+  id: string
   ts: string
   blocks: Block[]
   sources?: MessageSource[]
@@ -106,13 +115,13 @@ export interface AgentMessage {
 }
 
 export interface TypingMessage {
-  id: string
   role: 'typing'
+  id: string
 }
 
 export interface HITLMessage {
-  id: string
   role: 'hitl'
+  id: string
   ts: string
   conflictType: string
   title: string

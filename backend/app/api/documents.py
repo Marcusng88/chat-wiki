@@ -11,6 +11,7 @@ from app.db.documents import (
 )
 from app.db.storage import delete_file, get_presigned_upload_url
 from app.schemas.documents import ConfirmRequest, DocumentResponse, PresignRequest, PresignResponse
+from app.schemas.enums import DocumentStatus
 from app.services.ingestion import run_ingestion
 from app.utils.auth import get_user_id
 
@@ -35,7 +36,7 @@ async def confirm(
     row = await fetch_document(req.document_id, user_id)
     if not row:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found")
-    if row["status"] != "uploaded":
+    if row["status"] != DocumentStatus.UPLOADED:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=f"Document already in state: {row['status']}",

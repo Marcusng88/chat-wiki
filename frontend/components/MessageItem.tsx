@@ -1,15 +1,10 @@
 'use client'
 import { useCallback } from 'react'
-import type { AgentMessage, Message, MessageSource, TextBlock } from '@/lib/types'
-import { useAppStore } from '@/store/useAppStore'
-import Markdown from './Markdown'
+import type { AgentMessage, Message, MessageSource } from '@/lib/types'
+import { useChatStore } from '@/store/useChatStore'
 import HITLCard from './HITLCard'
 import OpenUIRenderer from './OpenUIRenderer'
 import ToolCallStream from './ToolCallStream'
-
-function isOpenUILang(text: string): boolean {
-  return /^\s*root\s*=\s*\w+\s*\(/.test(text)
-}
 
 interface Props {
   msg: Message
@@ -20,7 +15,7 @@ interface Props {
 
 export default function MessageItem({ msg, onOpenDoc, onResolveHitl, onQuery }: Props) {
   const openDoc = onOpenDoc ?? (() => {})
-  const isStreaming = useAppStore((s) => s.isStreaming)
+  const isStreaming = useChatStore((s) => s.isStreaming)
 
   const handleAction = useCallback((event: unknown) => {
     const e = event as { type: string; humanFriendlyMessage?: string }
@@ -72,37 +67,34 @@ export default function MessageItem({ msg, onOpenDoc, onResolveHitl, onQuery }: 
     )
   }
 
-  // agent — blocks model
-  const agentMsg = msg as AgentMessage
+  // msg.role === 'agent'
   return (
     <div className="msg-row agent">
       <div className="who">
         <span>agent</span>
-        <span className="ts">{agentMsg.ts}</span>
+        <span className="ts">{msg.ts}</span>
       </div>
       <div className="msg-bubble">
-        <ToolCallStream steps={agentMsg.steps ?? []} isStreaming={isStreaming} />
-        {agentMsg.blocks.map((block) =>
-          isOpenUILang((block as TextBlock).md) ? (
-            <div key={(block as TextBlock).id} className="openui-block">
-              <OpenUIRenderer
-                content={(block as TextBlock).md}
-                isStreaming={isStreaming}
-                onAction={handleAction}
-              />
+        <ToolCallStream steps={msg.steps ?? []} isStreaming={isStreaming} />
+        {msg.blocks.map((block) => {
+          if (block.type === 'openui') {
+            return (
+              <div key={block.id} className="openui-block">
+                <OpenUIRenderer
+                  content={block.content}
+                  isStreaming={isStreaming}
+                  onAction={handleAction}
+                />
+              </div>
+            )
+          }
+          // error block
+          return (
+            <div key={block.id} className="msg-error">
+              {block.message}
             </div>
-          ) : (
-            <Markdown
-              key={(block as TextBlock).id}
-              md={(block as TextBlock).md}
-              onCite={(idx) => {
-                const src = (agentMsg.sources ?? []).find((s: MessageSource) => s.idx === idx)
-                if (src) openDoc(src.docId)
-              }}
-              sources={agentMsg.sources}
-            />
           )
-        )}
+        })}
       </div>
     </div>
   )

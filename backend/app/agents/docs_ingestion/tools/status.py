@@ -2,22 +2,9 @@ from langchain_core.tools import tool
 from psycopg.rows import dict_row
 
 from app.db.db import get_conn
+from app.schemas.enums import DocumentStatus
 
-VALID_STATUSES = {
-    "uploaded",
-    "extracting",
-    "chunking",
-    "embedding",
-    "generating_wiki",
-    "indexing",
-    "conflict_scan",
-    "ready",
-    "failed_extraction",
-    "failed_embedding",
-    "failed_wiki",
-    "failed_indexing",
-    "unsupported",
-}
+VALID_STATUSES = {s.value for s in DocumentStatus} - {"uploading", "failed"}
 
 
 @tool(parse_docstring=True)

@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAppStore } from '@/store/useAppStore'
+import { useChatStore } from '@/store/useChatStore'
+import { useUIStore } from '@/store/useUIStore'
 import { useConfirm } from '@/lib/hooks/useConfirm'
 import { createClient } from '@/lib/supabase'
 import LeftPanel from './LeftPanel'
@@ -77,7 +78,8 @@ function Resizer() {
 // ── AppHeader ─────────────────────────────────────────────────────────────────
 
 function AppHeader() {
-  const { setMobileDrawerOpen, setThreadId } = useAppStore()
+  const { setMobileDrawerOpen } = useUIStore()
+  const { setThreadId } = useChatStore()
   const [menuOpen, setMenuOpen] = useState(false)
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -180,7 +182,7 @@ function AppHeader() {
 
 export default function TwoPanelShell() {
   const { isMobileDrawerOpen, setMobileDrawerOpen, leftCollapsed, setLeftCollapsed } =
-    useAppStore()
+    useUIStore()
 
   // Restore collapse state from localStorage on mount
   useEffect(() => {
