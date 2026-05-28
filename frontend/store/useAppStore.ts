@@ -4,7 +4,7 @@ import { create } from 'zustand'
 import { useShallow } from 'zustand/react/shallow'
 import { createClient } from '@/lib/supabase'
 import { resetA2uiProcessor } from '@/lib/a2uiProcessor'
-import type { Document, Message } from '@/lib/types'
+import type { Block, Document, Message, TextBlock } from '@/lib/types'
 
 interface AppState {
   documents: Document[]
@@ -23,6 +23,8 @@ interface AppActions {
   setMessages: (msgs: Message[] | ((prev: Message[]) => Message[])) => void
   addMessage: (msg: Message) => void
   updateMessage: (id: string, patch: Partial<Message>) => void
+  addBlock: (msgId: string, block: Block) => void
+  updateTextBlock: (msgId: string, blockId: string, md: string) => void
   clearMessages: () => Promise<void>
   setThreadId: (id: string | null) => void
   setLeftCollapsed: (value: boolean | ((prev: boolean) => boolean)) => void
@@ -62,6 +64,28 @@ export const useAppStore = create<AppState & AppActions>()((set) => ({
   updateMessage: (id, patch) =>
     set((s) => ({
       messages: s.messages.map((m) => (m.id === id ? { ...m, ...patch } as Message : m)),
+    })),
+
+  addBlock: (msgId, block) =>
+    set((s) => ({
+      messages: s.messages.map((m) =>
+        m.id === msgId && m.role === 'agent'
+          ? { ...m, blocks: [...m.blocks, block] } as Message
+          : m
+      ),
+    })),
+
+  updateTextBlock: (msgId, blockId, md) =>
+    set((s) => ({
+      messages: s.messages.map((m) => {
+        if (m.id !== msgId || m.role !== 'agent') return m
+        return {
+          ...m,
+          blocks: m.blocks.map((b) =>
+            b.type === 'text' && b.id === blockId ? { ...b, md } as TextBlock : b
+          ),
+        } as Message
+      }),
     })),
 
   clearMessages: async () => {

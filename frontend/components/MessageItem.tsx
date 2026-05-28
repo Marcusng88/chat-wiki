@@ -1,5 +1,5 @@
 'use client'
-import type { Message, MessageSource } from '@/lib/types'
+import type { AgentMessage, Message, MessageSource, TextBlock } from '@/lib/types'
 import Markdown from './Markdown'
 import SourcePill from './SourcePill'
 import HITLCard from './HITLCard'
@@ -46,18 +46,6 @@ export default function MessageItem({ msg, onOpenDoc, onResolveHitl, onQuery, su
     )
   }
 
-  if (msg.role === 'a2ui') {
-    return (
-      <div className="msg-row agent">
-        <div className="who">
-          <span>agent</span>
-          <span className="ts">{msg.ts}</span>
-        </div>
-        <A2UIRenderer surfaceId={msg.surfaceId} />
-      </div>
-    )
-  }
-
   if (msg.role === 'hitl') {
     return (
       <div className="msg-row agent" style={{ width: '100%' }}>
@@ -72,26 +60,36 @@ export default function MessageItem({ msg, onOpenDoc, onResolveHitl, onQuery, su
     )
   }
 
-  // agent
+  // agent — blocks model
+  const agentMsg = msg as AgentMessage
   return (
     <div className="msg-row agent">
       <div className="who">
         <span>agent</span>
-        <span className="ts">{msg.ts}</span>
+        <span className="ts">{agentMsg.ts}</span>
       </div>
       <div className="msg-bubble">
-        <Markdown
-          md={msg.md}
-          onCite={(idx) => {
-            const src = (msg.sources ?? []).find((s: MessageSource) => s.idx === idx)
-            if (src) openDoc(src.docId)
-          }}
-          sources={msg.sources}
-        />
-{msg.sources && msg.sources.length > 0 && (
+        {agentMsg.blocks.map((block) =>
+          block.type === 'text' ? (
+            <Markdown
+              key={(block as TextBlock).id}
+              md={(block as TextBlock).md}
+              onCite={(idx) => {
+                const src = (agentMsg.sources ?? []).find((s: MessageSource) => s.idx === idx)
+                if (src) openDoc(src.docId)
+              }}
+              sources={agentMsg.sources}
+            />
+          ) : (
+            <div key={block.surfaceId} className="a2ui-block">
+              <A2UIRenderer surfaceId={block.surfaceId} />
+            </div>
+          )
+        )}
+        {agentMsg.sources && agentMsg.sources.length > 0 && (
           <div className="sources-row">
             <span className="sources-label">sources</span>
-            {msg.sources.map((s) => (
+            {agentMsg.sources.map((s) => (
               <SourcePill key={s.idx} src={s} onOpen={openDoc} />
             ))}
           </div>

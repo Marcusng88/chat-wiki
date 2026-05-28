@@ -5,7 +5,7 @@ import { createChatAgent } from '@/lib/agentClient'
 import { createClient } from '@/lib/supabase'
 import { useAppStore } from '@/store/useAppStore'
 import { getA2uiProcessor } from '@/lib/a2uiProcessor'
-import type { AgentMessage, A2UIMessage, HITLMessage } from '@/lib/types'
+import type { AgentMessage, HITLMessage, TextBlock, UserMessage } from '@/lib/types'
 
 const CONFLICT_LABELS: Record<string, string> = {
   duplicate: 'Duplicate content',
@@ -19,46 +19,50 @@ function nowTs() {
 
 export function useChat() {
   const textBuf = useRef<Record<string, string>>({})
-  const suppressMsg = useRef<Set<string>>(new Set())
+  const currentTurnId = useRef<string | null>(null)
+
+  const ensureTurn = useCallback(() => {
+    if (currentTurnId.current) return currentTurnId.current
+    const { setMessages } = useAppStore.getState()
+    const turnId = 'turn-' + Date.now()
+    currentTurnId.current = turnId
+    setMessages((m) => [
+      ...m.filter((x) => x.role !== 'typing'),
+      {
+        id: turnId,
+        role: 'agent',
+        ts: nowTs(),
+        blocks: [],
+        sources: [],
+      } satisfies AgentMessage,
+    ])
+    return turnId
+  }, [])
 
   const makeHandlers = useCallback(() => {
     return {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       next(event: any) {
-        const { addMessage, updateMessage, setMessages, setIsStreaming, setPendingHITL } =
+        const { addBlock, updateTextBlock, setMessages, setIsStreaming, setPendingHITL } =
           useAppStore.getState()
 
         switch (event.type) {
           case EventType.TEXT_MESSAGE_START: {
-            if (suppressMsg.current.has('next')) {
-              suppressMsg.current.delete('next')
-              suppressMsg.current.add(event.messageId)
-              break
-            }
+            const turnId = ensureTurn()
             textBuf.current[event.messageId] = ''
-            setMessages((m) => [
-              ...m.filter((x) => x.role !== 'typing'),
-              {
-                id: event.messageId,
-                role: 'agent',
-                ts: nowTs(),
-                md: '',
-                sources: [],
-              } satisfies AgentMessage,
-            ])
+            addBlock(turnId, { type: 'text', id: event.messageId, md: '' } satisfies TextBlock)
             break
           }
 
           case EventType.TEXT_MESSAGE_CONTENT: {
-            if (suppressMsg.current.has(event.messageId)) break
+            if (!currentTurnId.current) break
             textBuf.current[event.messageId] =
               (textBuf.current[event.messageId] ?? '') + event.delta
-            updateMessage(event.messageId, { md: textBuf.current[event.messageId] })
+            updateTextBlock(currentTurnId.current, event.messageId, textBuf.current[event.messageId])
             break
           }
 
           case EventType.TEXT_MESSAGE_END: {
-            suppressMsg.current.delete(event.messageId)
             delete textBuf.current[event.messageId]
             break
           }
@@ -71,6 +75,7 @@ export function useChat() {
                 val.documents as Array<{ id: string; title: string; created_at: string }>
               ) ?? []
               setMessages((m) => m.filter((x) => x.role !== 'typing'))
+              const { addMessage } = useAppStore.getState()
               addMessage({
                 id: 'hitl-' + (val.conflict_id as string),
                 role: 'hitl',
@@ -93,40 +98,36 @@ export function useChat() {
             if (val.createSurface) {
               const { surfaceId } = val.createSurface as { surfaceId: string }
               processor.processMessages([val as any]) // eslint-disable-line @typescript-eslint/no-explicit-any
-              addMessage({
-                id: 'a2ui-' + surfaceId,
-                role: 'a2ui',
-                ts: nowTs(),
-                surfaceId,
-              } satisfies A2UIMessage)
+              const turnId = ensureTurn()
+              addBlock(turnId, { type: 'a2ui', surfaceId })
             } else if (val.updateComponents) {
               processor.processMessages([val as any]) // eslint-disable-line @typescript-eslint/no-explicit-any
             } else if (val.updateDataModel) {
               processor.processMessages([val as any]) // eslint-disable-line @typescript-eslint/no-explicit-any
-              suppressMsg.current.add('next')
             }
             break
           }
 
           case EventType.RUN_FINISHED: {
             setMessages((m) => m.filter((x) => x.role !== 'typing'))
-            suppressMsg.current.clear()
+            currentTurnId.current = null
+            textBuf.current = {}
             setIsStreaming(false)
             break
           }
 
           case EventType.RUN_ERROR: {
-            setMessages((m) => [
-              ...m.filter((x) => x.role !== 'typing'),
-              {
-                id: 'err' + Date.now(),
-                role: 'agent',
-                ts: nowTs(),
-                md: 'Something went wrong. Try again.',
-                sources: [],
-              } satisfies AgentMessage,
-            ])
-            suppressMsg.current.clear()
+            const { addMessage } = useAppStore.getState()
+            setMessages((m) => m.filter((x) => x.role !== 'typing'))
+            addMessage({
+              id: 'err' + Date.now(),
+              role: 'agent',
+              ts: nowTs(),
+              blocks: [{ type: 'text', id: 'err-block-' + Date.now(), md: 'Something went wrong. Try again.' }],
+              sources: [],
+            } satisfies AgentMessage)
+            currentTurnId.current = null
+            textBuf.current = {}
             setIsStreaming(false)
             break
           }
@@ -134,21 +135,21 @@ export function useChat() {
       },
 
       error() {
-        const { setMessages, setIsStreaming } = useAppStore.getState()
-        setMessages((m) => [
-          ...m.filter((x) => x.role !== 'typing'),
-          {
-            id: 'err' + Date.now(),
-            role: 'agent',
-            ts: nowTs(),
-            md: 'Something went wrong. Try again.',
-            sources: [],
-          } satisfies AgentMessage,
-        ])
+        const { addMessage, setMessages, setIsStreaming } = useAppStore.getState()
+        setMessages((m) => m.filter((x) => x.role !== 'typing'))
+        addMessage({
+          id: 'err' + Date.now(),
+          role: 'agent',
+          ts: nowTs(),
+          blocks: [{ type: 'text', id: 'err-block-' + Date.now(), md: 'Something went wrong. Try again.' }],
+          sources: [],
+        } satisfies AgentMessage)
+        currentTurnId.current = null
+        textBuf.current = {}
         setIsStreaming(false)
       },
     }
-  }, [])
+  }, [ensureTurn])
 
   const send = useCallback(async (text: string) => {
     const { messages, threadId, addMessage, setIsStreaming } = useAppStore.getState()
@@ -168,8 +169,11 @@ export function useChat() {
           role: m.role === 'user' ? ('user' as const) : ('assistant' as const),
           content:
             m.role === 'user'
-              ? (m as { content: string }).content
-              : (m as AgentMessage).md ?? '',
+              ? (m as UserMessage).content
+              : (m as AgentMessage).blocks
+                  .filter((b): b is TextBlock => b.type === 'text')
+                  .map((b) => b.md)
+                  .join('\n\n'),
         })),
       { id: userMsgId, role: 'user' as const, content: text },
     ]

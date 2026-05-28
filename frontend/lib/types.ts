@@ -81,11 +81,24 @@ export interface UserMessage {
   ts: string
 }
 
+export interface TextBlock {
+  type: 'text'
+  id: string
+  md: string
+}
+
+export interface A2UIBlock {
+  type: 'a2ui'
+  surfaceId: string
+}
+
+export type Block = TextBlock | A2UIBlock
+
 export interface AgentMessage {
   id: string
   role: 'agent'
   ts: string
-  md: string
+  blocks: Block[]
   sources?: MessageSource[]
 }
 
@@ -105,11 +118,4 @@ export interface HITLMessage {
   recommend: string
 }
 
-export interface A2UIMessage {
-  id: string
-  role: 'a2ui'
-  ts: string
-  surfaceId: string
-}
-
-export type Message = UserMessage | AgentMessage | TypingMessage | HITLMessage | A2UIMessage
+export type Message = UserMessage | AgentMessage | TypingMessage | HITLMessage

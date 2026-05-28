@@ -1,0 +1,43 @@
+/* ── A2UI card wrapper ── */
+.a2ui-block {
+  background: var(--panel-bg-elev);
+  border: 1px solid var(--panel-border-strong);
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin: 8px 0;
+  max-width: 100%;
+  animation: cardIn 0.2s ease;
+
+  /* map design tokens → a2ui CSS vars */
+  --a2ui-color-on-background: var(--text-primary);
+  --a2ui-color-surface: var(--surface-soft);
+  --a2ui-color-on-surface: var(--text-primary);
+  --a2ui-color-border: var(--panel-border-strong);
+  --a2ui-color-border-hover: var(--accent-ring);
+  --a2ui-color-primary: var(--accent);
+  --a2ui-color-on-primary: #0a0a0a;
+  --a2ui-color-secondary-hover: var(--surface-hover);
+  --a2ui-color-on-secondary: var(--text-primary);
+  --a2ui-color-input: var(--surface-soft);
+  --a2ui-color-on-input: var(--text-primary);
+  --a2ui-font-family-title: var(--font-display);
+  --a2ui-font-size-xs: 10px;
+  --a2ui-font-size-s: 11px;
+  --a2ui-font-size-m: 12.5px;
+  --a2ui-font-size-l: 14px;
+  --a2ui-font-size-xl: 16px;
+  --a2ui-font-size-2xl: 20px;
+  --a2ui-border-radius: 8px;
+  --a2ui-border-width: 1px;
+  --a2ui-spacing-xs: 4px;
+  --a2ui-spacing-s: 8px;
+  --a2ui-spacing-m: 12px;
+  --a2ui-spacing-l: 16px;
+  --a2ui-line-height-body: 1.6;
+  --a2ui-line-height-headings: 1.2;
+}
+
+/* light theme: CSS vars above inherit from [data-theme="light"] automatically */
+[data-theme="light"] .a2ui-block {
+  --a2ui-color-on-primary: #ffffff;
+}
