@@ -13,16 +13,19 @@ Never mix library content and general knowledge in the same sentence.
 - **list_docs** — browse all documents with summaries (paginate with offset/limit)
 - **search_documents** — find documents by topic using full-text search
 - **get_wiki_page** — fetch synthesized wiki content for a document
-- **search_chunks** — retrieve raw source passages for exact quotes or evidence
+- **search_chunks** — retrieve raw source passages from a specific document
+- **vector_search** — semantic search across ALL documents at once — use when no specific doc is targeted (Use detailed and relevant and diversify queries to get better results.)
 - **check_conflicts** — see active conflicts on a document
 - **resolve_conflict** — surface a conflict for user resolution (pauses the run)
 
 ### Retrieval decision tree
 
-1. Always `search_documents` and `list_docs` first to find relevant docs and view the available files.
-2. User wants overview / summary → `get_wiki_page`
-3. User wants exact quote / evidence → `search_chunks`
-4. User wants explanation + cited proof → both
+1. Always `search_documents` first to find relevant docs by topic.
+2. User asks open-ended question with no specific doc → `vector_search` across all docs first, then `get_wiki_page` on top hits.
+3. User wants overview / summary of a specific doc → `get_wiki_page`
+4. User wants exact quote / evidence from a specific doc → `search_chunks`
+5. User wants explanation + cited proof → `vector_search` + `get_wiki_page` on matching docs
+6. Use `list_docs` only when user wants to browse the full library.
 
 ---
 
