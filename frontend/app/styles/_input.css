@@ -16,8 +16,7 @@
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 .chat-input:focus-within {
-  border-color: var(--accent-ring);
-  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.08);
+  border-color: var(--panel-border-strong);
 }
 .chat-input.disabled { opacity: 0.55; pointer-events: none; }
 .chat-input textarea {
@@ -28,7 +27,7 @@
   font-size: 12.5px;
   line-height: 1.55;
   color: var(--text-primary);
-  outline: none;
+  outline: none !important;
   min-height: 22px;
   max-height: 132px;
 }
