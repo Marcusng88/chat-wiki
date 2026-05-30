@@ -16,6 +16,7 @@ export default function ChatPanel() {
   const chat = useChat()
   const requestConfirm = useConfirm()
   const [input, setInput] = useState('')
+  const inputRef = useRef('')
   const taRef = useRef<HTMLTextAreaElement>(null)
   const bodyRef = useRef<HTMLDivElement>(null)
 
@@ -38,11 +39,12 @@ export default function ChatPanel() {
   }, [setLeftCollapsed, openDocument])
 
   const send = useCallback((textOverride?: string) => {
-    const text = (typeof textOverride === 'string' ? textOverride : input).trim()
+    const text = (typeof textOverride === 'string' ? textOverride : inputRef.current).trim()
     if (!text || isStreaming || pendingHITL) return
+    inputRef.current = ''
     setInput('')
     chat.send(text)
-  }, [input, isStreaming, pendingHITL, chat])
+  }, [isStreaming, pendingHITL, chat])
 
   const resolveHITL = useCallback((choice: string, notes?: string) => {
     if (choice === 'reject') {
@@ -96,7 +98,7 @@ export default function ChatPanel() {
           <textarea
             ref={taRef}
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(e) => { inputRef.current = e.target.value; setInput(e.target.value) }}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() }
             }}

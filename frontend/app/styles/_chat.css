@@ -6,6 +6,10 @@
   display: flex;
   flex-direction: column;
   gap: 22px;
+  /* Layout boundary: resizing the input textarea must not force a reflow of
+     the whole message list. Without this, reading textarea.scrollHeight on
+     every keystroke relayouts every message → typing lag scaling with count. */
+  contain: layout;
 }
 
 /* ── Message rows ── */

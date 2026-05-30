@@ -1,5 +1,5 @@
 'use client'
-import { useCallback } from 'react'
+import { memo, useCallback } from 'react'
 import type { AgentMessage, Message, MessageSource } from '@/lib/types'
 import { useChatStore } from '@/store/useChatStore'
 import HITLCard from './HITLCard'
@@ -13,7 +13,7 @@ interface Props {
   onQuery?: (text: string) => void
 }
 
-export default function MessageItem({ msg, onOpenDoc, onResolveHitl, onQuery }: Props) {
+function MessageItem({ msg, onOpenDoc, onResolveHitl, onQuery }: Props) {
   const openDoc = onOpenDoc ?? (() => {})
   const isStreaming = useChatStore((s) => s.isStreaming)
 
@@ -99,3 +99,5 @@ export default function MessageItem({ msg, onOpenDoc, onResolveHitl, onQuery }: 
     </div>
   )
 }
+
+export default memo(MessageItem)
