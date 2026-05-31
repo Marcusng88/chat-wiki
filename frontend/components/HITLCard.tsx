@@ -10,7 +10,7 @@ interface Props {
 }
 
 export default function HITLCard({ msg, onResolve }: Props) {
-  const [picked, setPicked] = useState(msg.sources[0]?.id ?? '')
+  const [picked, setPicked] = useState(msg.recommendedId ?? msg.sources[0]?.id ?? '')
   const [done, setDone] = useState(false)
   const [showNoteInput, setShowNoteInput] = useState(false)
   const [note, setNote] = useState('')
@@ -48,6 +48,12 @@ export default function HITLCard({ msg, onResolve }: Props) {
         <span className="req-id">paused</span>
       </div>
       <div className="hitl-body">
+        {msg.explanation && (
+          <div className="hitl-conflict-detail">
+            <span className="hitl-section-label">What&apos;s conflicting</span>
+            <Markdown md={msg.explanation} onCite={() => {}} />
+          </div>
+        )}
         <div className="hitl-sources">
           {msg.sources.map((s) => (
             <div
@@ -55,7 +61,9 @@ export default function HITLCard({ msg, onResolve }: Props) {
               className={`hitl-source${picked === s.id ? ' selected' : ''}`}
               onClick={() => setPicked(s.id)}
             >
+              {s.id === msg.recommendedId && <span className="rec-tag">recommended</span>}
               <span className="name">{s.name}</span>
+              {s.stance && <span className="stance">{s.stance}</span>}
               <span className="date">{s.date}</span>
               <span className="check"><Check /></span>
             </div>

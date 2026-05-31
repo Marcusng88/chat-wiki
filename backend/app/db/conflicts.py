@@ -182,6 +182,7 @@ async def fetch_document_conflicts(document_id: str, user_id: str) -> list[dict]
                     c.id::text,
                     c.conflict_type,
                     c.status,
+                    c.detail,
                     c.preferred_document_id::text,
                     array_agg(
                         json_build_object('id', d.id::text, 'title', d.title)
@@ -208,6 +209,7 @@ async def fetch_conflict_with_docs(conflict_id: str, user_id: str) -> dict | Non
                     c.id::text,
                     c.conflict_type,
                     c.status,
+                    c.detail,
                     array_agg(
                         json_build_object(
                             'id', d.id::text,

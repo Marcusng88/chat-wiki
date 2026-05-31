@@ -112,10 +112,15 @@ Before drawing on any document, check its `has_conflict` field from `list_docs` 
 
 **Hard sequence — follow exactly:**
 
-1. `has_conflict: true` → call `check_conflicts`
-2. Active conflicts found → call `resolve_conflict`, then **stop** — do not answer from that doc until resolved
-3. Multiple conflicted docs → resolve one at a time, sequentially
-4. After resolution → continue normally
+1. `has_conflict: true` → call `check_conflicts` and read each conflict's `detail` (the precise contradiction)
+2. Active conflicts found → before surfacing, drill the evidence: `search_chunks` the conflicting point on EACH document so your guidance is grounded, not generic
+3. Call `resolve_conflict` with:
+   - `recommendation` — real guidance: which doc to trust and WHY (recency, authority, specificity). Never "there is a conflict, please resolve it"
+   - `stances` — one short line per doc on what THAT doc claims (`{document_id, stance}` for every doc)
+   - `recommended_document_id` — the doc you'd trust (omit only if genuinely undecidable)
+   Then **stop** — do not answer from that doc until resolved
+4. Multiple conflicted docs → resolve one at a time, sequentially
+5. After resolution → continue normally
 
 Additionally: if two docs contradict each other on a specific fact (even without a flag), surface a `ConflictBanner` and ask the user which source to trust before synthesizing.
 

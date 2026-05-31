@@ -76,6 +76,7 @@ export interface HITLSource {
   id: string
   name: string
   date: string
+  stance?: string
 }
 
 export interface ToolCallStep {
@@ -129,6 +130,7 @@ export interface HITLMessage {
   explanation: string
   sources: HITLSource[]
   recommend: string
+  recommendedId?: string
 }
 
 export type Message = UserMessage | AgentMessage | TypingMessage | HITLMessage

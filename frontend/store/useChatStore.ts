@@ -193,16 +193,17 @@ export const useChatStore = create<ChatState & ChatActions>()((set) => ({
         }
 
         case 'INTERRUPTED': {
-          const { conflict_id, conflict_type, documents, recommendation } = action.hitl
+          const { conflict_id, conflict_type, detail, documents, recommendation, recommended_document_id } = action.hitl
           const hitlMsg: HITLMessage = {
             role: 'hitl',
             id: 'hitl-' + conflict_id,
             ts: nowTs(),
             conflictType: conflict_type,
             title: CONFLICT_LABELS[conflict_type] ?? conflict_type,
-            explanation: '',
-            sources: documents.map((d) => ({ id: d.id, name: d.title, date: d.created_at })),
+            explanation: detail,
+            sources: documents.map((d) => ({ id: d.id, name: d.title, date: d.created_at, stance: d.stance })),
             recommend: recommendation,
+            recommendedId: recommended_document_id ?? undefined,
           }
           return {
             messages: [...state.messages.filter((m) => m.role !== 'typing'), hitlMsg],

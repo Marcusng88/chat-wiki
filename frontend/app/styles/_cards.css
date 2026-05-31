@@ -67,6 +67,29 @@
   color: transparent;
 }
 .hitl-source.selected .check { background: var(--accent); border-color: var(--accent); color: #0a0a0a; }
+.hitl-source .stance { font-size: 11px; color: var(--text-secondary); line-height: 1.45; }
+.hitl-source .rec-tag {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.hitl-conflict-detail {
+  font-size: 12px;
+  color: var(--text-primary);
+  line-height: 1.55;
+  margin-bottom: 12px;
+}
+.hitl-section-label {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
 
 .hitl-recommend {
   font-size: 11px;
