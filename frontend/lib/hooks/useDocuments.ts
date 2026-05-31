@@ -13,6 +13,7 @@ export function rowToDocument(r: Awaited<ReturnType<typeof listDocuments>>[numbe
     fileType: fileTypeFromApi(r.file_type),
     status: r.status as DocumentStatus,
     hasConflict: r.has_conflict,
+    scanned: r.scanned,
     pages: 1,
     addedAt: new Date(r.created_at).toLocaleDateString(),
     size: '—',

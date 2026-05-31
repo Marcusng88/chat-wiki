@@ -26,6 +26,7 @@ class DocumentResponse(BaseModel):
     file_type: str
     status: DocumentStatus
     has_conflict: bool
+    scanned: bool = False
     created_at: datetime
     wiki_page: str | None = None
     summary: str | None = None

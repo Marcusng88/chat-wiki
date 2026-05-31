@@ -52,6 +52,7 @@ export interface Document {
   fileType: FileType
   status: DocumentStatus
   hasConflict: boolean
+  scanned: boolean
   pages: number
   addedAt: string
   size: string

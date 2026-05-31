@@ -53,6 +53,7 @@ async def fetch_document_list(user_id: str) -> list[dict]:
                     d.summary,
                     COALESCE(d.topics, '{}') AS topics,
                     d.created_at,
+                    d.scanned_at IS NOT NULL AS scanned,
                     EXISTS(
                         SELECT 1 FROM conflict_documents cd
                         JOIN conflicts c ON c.id = cd.conflict_id

@@ -25,6 +25,7 @@ export interface DocumentResponse {
   file_type: string
   status: string
   has_conflict: boolean
+  scanned: boolean
   created_at: string
   wiki_page: string | null
   summary: string | null

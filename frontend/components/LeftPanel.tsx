@@ -97,6 +97,8 @@ export default function LeftPanel() {
   }
 
   const readyCount = documents.filter((d) => d.status === 'ready').length
+  const hasUnscanned = documents.some((d) => d.status === 'ready' && !d.scanned)
+  const resolverDisabled = scanning || !hasUnscanned
 
   return (
     <>
@@ -150,18 +152,20 @@ export default function LeftPanel() {
             <button
               className="resolver-btn"
               onClick={onResolverClick}
-              disabled={scanning}
+              disabled={resolverDisabled}
               aria-busy={scanning}
             >
               <span className="resolver-icon"><Sparkle /></span>
               <span className="resolver-text">
                 <span className="resolver-title">
-                  {scanning ? 'Checking…' : 'Check for conflicts'}
+                  {scanning ? 'Checking…' : hasUnscanned ? 'Check for conflicts' : 'All files checked'}
                 </span>
                 <span className="resolver-sub">
                   {scanning
                     ? 'Scanning your files for disagreements — this runs in the background.'
-                    : 'Spots disagreements between your files — the assistant asks before anything changes.'}
+                    : hasUnscanned
+                      ? 'Spots disagreements between your files — the assistant asks before anything changes.'
+                      : 'Nothing new to check. Upload more files to run another scan.'}
                 </span>
               </span>
               {activeConflicts.length > 0 && (
