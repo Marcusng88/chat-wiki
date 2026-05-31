@@ -189,6 +189,52 @@ async def search_chunks(
 
 
 @tool(parse_docstring=True)
+async def vector_search(
+    query: str,
+    limit: int = 8,
+    config: RunnableConfig = None,
+) -> list[dict]:
+    """Search across all ready documents using semantic vector similarity.
+
+    Use when the user asks a question without specifying a document, or when
+    you want to find the most relevant passages from the entire library at once.
+    Returns ranked chunks from any document, with source doc title and score. 
+    Use detailed and relevant and diversify queries to get better results.
+
+    Args:
+        query: Natural language query to find semantically relevant passages.
+        limit: Number of chunks to return (default 8, max 20).
+
+    Returns:
+        List of chunks with content, relevance_score, doc_title, doc_id, page_ref.
+    """
+    user_id = config["configurable"]["user_id"]
+    limit = min(limit, 20)
+
+    vector = await get_embeddings().aembed_query(query)
+
+    async with get_conn() as conn:
+        async with conn.cursor(row_factory=dict_row) as cur:
+            await cur.execute(
+                """
+                SELECT
+                    c.content,
+                    c.page_ref,
+                    d.id::text AS doc_id,
+                    d.title AS doc_title,
+                    1 - (c.embedding <=> %s::vector) AS relevance_score
+                FROM chunks c
+                JOIN documents d ON d.id = c.document_id
+                WHERE d.user_id = %s AND d.status = 'ready'
+                ORDER BY c.embedding <=> %s::vector
+                LIMIT %s
+                """,
+                (str(vector), user_id, str(vector), limit),
+            )
+            return [dict(r) for r in await cur.fetchall()]
+
+
+@tool(parse_docstring=True)
 async def check_conflicts(document_id: str, config: RunnableConfig = None) -> list[dict]:
     """Check if a document has any active unresolved conflicts.
 

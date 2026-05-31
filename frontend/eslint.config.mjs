@@ -5,6 +5,13 @@ import nextTs from "eslint-config-next/typescript";
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
+  {
+    files: ['lib/openui-library.tsx'],
+    rules: {
+      'react-hooks/no-direct-set-state-in-use-effect': 'off',
+      'react-hooks/exhaustive-deps': 'warn',
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:

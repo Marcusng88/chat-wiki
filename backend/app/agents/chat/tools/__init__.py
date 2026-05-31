@@ -3,6 +3,7 @@ from app.agents.chat.tools.retrieval import (
     search_documents,
     get_wiki_page,
     search_chunks,
+    vector_search,
     check_conflicts,
 )
 from app.agents.chat.tools.hitl import resolve_conflict
@@ -12,6 +13,7 @@ __all__ = [
     "search_documents",
     "get_wiki_page",
     "search_chunks",
+    "vector_search",
     "check_conflicts",
     "resolve_conflict",
 ]

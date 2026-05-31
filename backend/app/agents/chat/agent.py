@@ -11,6 +11,7 @@ from app.agents.chat.tools import (
     search_documents,
     get_wiki_page,
     search_chunks,
+    vector_search,
     check_conflicts,
     resolve_conflict,
 )
@@ -31,6 +32,7 @@ def build_chat_agent() -> LangGraphAgent:
             search_documents,
             get_wiki_page,
             search_chunks,
+            vector_search,
             check_conflicts,
             resolve_conflict,
         ],
