@@ -47,6 +47,10 @@ export function presignDocument(filename: string, file_type: string, title: stri
   })
 }
 
+export function resolveConflicts(): Promise<void> {
+  return apiFetch('/agent/resolve', { method: 'POST' })
+}
+
 export function confirmDocument(document_id: string): Promise<void> {
   return apiFetch('/documents/confirm', {
     method: 'POST',
