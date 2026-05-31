@@ -46,6 +46,19 @@ async def resolve_conflict(
         for doc in conflict["documents"]
     ]
 
+    # Every document must carry a stance, or the user can't tell what a choice
+    # means. Reject incomplete calls and make the agent retry rather than
+    # surfacing a half-filled card.
+    missing = [doc["title"] for doc in documents if not (doc.get("stance") or "").strip()]
+    if missing:
+        return (
+            "Did not surface the conflict: a `stances` entry (document_id + a "
+            "one-line claim) is required for EVERY document. Missing stance for: "
+            + ", ".join(missing)
+            + ". Drill each document's chunks if needed, then call resolve_conflict "
+            "again with a stance for all documents."
+        )
+
     decision = interrupt({
         "conflict_id": conflict_id,
         "conflict_type": conflict["conflict_type"],
@@ -58,6 +71,18 @@ async def resolve_conflict(
     action = decision.get("action", "reject")
     preferred_doc_id = decision.get("preferred_document_id")
     notes = decision.get("notes")
+
+    if action == "modify":
+        # A freeform instruction only the agent can interpret. Do NOT resolve
+        # the conflict — hand the note back so the agent reasons over it. The
+        # conflict stays flagged until the user later approves or rejects.
+        note_txt = notes or "(no note provided)"
+        return (
+            f'The user did not pick a side for conflict {conflict_id}. '
+            f'They said: "{note_txt}". The conflict is still unresolved. '
+            f"Address their message directly to help them decide. Do not surface "
+            f"this same conflict again in this turn."
+        )
 
     await resolve_conflict_db(conflict_id, action, preferred_doc_id, notes, user_id)
 

@@ -206,7 +206,12 @@ export const useChatStore = create<ChatState & ChatActions>()((set) => ({
             recommendedId: recommended_document_id ?? undefined,
           }
           return {
-            messages: [...state.messages.filter((m) => m.role !== 'typing'), hitlMsg],
+            // Drop any prior card for the same conflict so re-surfacing it
+            // replaces (not duplicates) the message — keys stay unique.
+            messages: [
+              ...state.messages.filter((m) => m.role !== 'typing' && m.id !== hitlMsg.id),
+              hitlMsg,
+            ],
             pendingHITL: true,
           }
         }

@@ -253,39 +253,6 @@ const KnowledgeGapCard = defineComponent({
   component: KnowledgeGapCardRenderer,
 })
 
-// ── ConflictBanner ────────────────────────────────────────────────────────────
-
-type ConflictProps = { doc1Title: string; doc2Title: string; conflictSummary: string; recommendation: string }
-
-function ConflictBannerRenderer({ props }: { props: ConflictProps }) {
-  const triggerAction = useTriggerAction()
-  return (
-    <div style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.22)', borderRadius: 12, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ fontSize: 15 }}>⚡</span>
-        <span style={{ fontWeight: 700, color: 'var(--status-failed)', fontSize: 14 }}>Conflict Detected</span>
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-        {[props.doc1Title, props.doc2Title].map((title, i) => (
-          <div key={i} style={{ background: 'var(--surface-recess)', borderRadius: 7, padding: '7px 10px', fontSize: 12, color: 'var(--text-secondary)', fontWeight: 500 }}>{title}</div>
-        ))}
-      </div>
-      <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.55 }}>{props.conflictSummary}</p>
-      <div style={{ background: 'rgba(6,182,212,0.05)', border: '1px solid var(--accent-ring)', borderRadius: 7, padding: '9px 12px', fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.5 }}>
-        <span style={{ fontWeight: 600, color: 'var(--accent)' }}>Recommendation: </span>{props.recommendation}
-      </div>
-      <button onClick={() => triggerAction('Resolve this conflict')} style={{ alignSelf: 'flex-start', fontSize: 13, fontWeight: 600, color: '#fff', background: 'var(--status-conflict)', border: 'none', borderRadius: 7, padding: '6px 16px', cursor: 'pointer' }}>Resolve →</button>
-    </div>
-  )
-}
-
-const ConflictBanner = defineComponent({
-  name: 'ConflictBanner',
-  description: 'Shows a conflict between two documents with agent recommendation and resolve button. Use when has_conflict:true is detected, before calling resolve_conflict.',
-  props: z.object({ doc1Title: z.string(), doc2Title: z.string(), conflictSummary: z.string(), recommendation: z.string() }),
-  component: ConflictBannerRenderer,
-})
-
 // ── TopicCluster ──────────────────────────────────────────────────────────────
 
 type TopicClusterProps = { clusters: { topic: string; count: number; docs: string[] }[] }
@@ -691,7 +658,6 @@ const domainComponents: AnyComp[] = [
   WikiSummaryCard,
   CitationCard,
   KnowledgeGapCard,
-  ConflictBanner,
   TopicCluster,
   ComparisonView,
   ChunkEvidence,
