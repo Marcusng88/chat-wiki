@@ -30,7 +30,18 @@ function agUiEventToAction(event: any): ChatAction | null {
       return { type: 'RUN_ERROR', message: event.message ?? 'Unknown error' }
     case EventType.CUSTOM: {
       if (event.name !== 'on_interrupt') return null
-      const parsed = HITLPayloadSchema.safeParse(event.value)
+      // ag_ui_langgraph emits the interrupt value JSON-stringified (dump_json_safe),
+      // so event.value arrives as a string. Tolerate a raw object too in case a
+      // future adapter version stops stringifying.
+      let raw: unknown = event.value
+      if (typeof raw === 'string') {
+        try {
+          raw = JSON.parse(raw)
+        } catch {
+          return { type: 'RUN_ERROR', message: 'Invalid HITL payload from server' }
+        }
+      }
+      const parsed = HITLPayloadSchema.safeParse(raw)
       if (!parsed.success) {
         return { type: 'RUN_ERROR', message: 'Invalid HITL payload from server' }
       }
