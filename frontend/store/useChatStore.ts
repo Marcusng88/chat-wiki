@@ -194,9 +194,15 @@ export const useChatStore = create<ChatState & ChatActions>()((set) => ({
 
         case 'INTERRUPTED': {
           const { conflict_id, conflict_type, detail, documents, recommendation, recommended_document_id } = action.hitl
+          // Stable per-conflict prefix for dedup; nonce suffix makes the React key
+          // change on every surfacing so the card REMOUNTS fresh. Without the
+          // nonce, re-surfacing the same conflict reuses the old component
+          // instance and its stale resolvedAs state (shows the prior
+          // confirmation instead of a live card).
+          const idPrefix = 'hitl-' + conflict_id
           const hitlMsg: HITLMessage = {
             role: 'hitl',
-            id: 'hitl-' + conflict_id,
+            id: idPrefix + '-' + Date.now(),
             ts: nowTs(),
             conflictType: conflict_type,
             title: CONFLICT_LABELS[conflict_type] ?? conflict_type,
@@ -206,10 +212,12 @@ export const useChatStore = create<ChatState & ChatActions>()((set) => ({
             recommendedId: recommended_document_id ?? undefined,
           }
           return {
-            // Drop any prior card for the same conflict so re-surfacing it
-            // replaces (not duplicates) the message — keys stay unique.
+            // Drop any prior card for the same conflict (match by prefix, ignoring
+            // the nonce) so re-surfacing replaces rather than stacks duplicates.
             messages: [
-              ...state.messages.filter((m) => m.role !== 'typing' && m.id !== hitlMsg.id),
+              ...state.messages.filter(
+                (m) => m.role !== 'typing' && !(m.role === 'hitl' && m.id.startsWith(idPrefix)),
+              ),
               hitlMsg,
             ],
             pendingHITL: true,
