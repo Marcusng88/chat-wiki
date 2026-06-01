@@ -6,6 +6,27 @@ Upload your PDFs, slides, notes, and images. chat-wiki extracts them, builds a s
 
 ---
 
+## Demo
+
+Three short clips walk through the product end to end.
+
+### 1. Document ingestion → wiki + index
+Drop a file → live status (`extract → chunk → embed → wiki → index`) → it becomes `ready` and queryable.
+
+https://github.com/Marcusng88/chat-wiki/raw/main/assets/docs_ingestion_demo.mp4
+
+### 2. Generative UI
+The assistant answers by emitting rich UI cards (charts, tables, comparisons) instead of plain text.
+
+https://github.com/Marcusng88/chat-wiki/raw/main/assets/generative_ui_demo.mp4
+
+### 3. Conflict governance (human-in-the-loop)
+Two sources disagree → the assistant pauses mid-answer, surfaces a decision card, and resumes on your call.
+
+https://github.com/Marcusng88/chat-wiki/raw/main/assets/user_governance_hitl_demo.mp4
+
+---
+
 ## Why this exists
 
 Most "chat with your docs" tools treat every source as equally true and silently blend them. That's fine until two files disagree on a number, a date, or a policy — then the assistant confidently gives you an answer with no idea it just averaged two contradicting facts.
