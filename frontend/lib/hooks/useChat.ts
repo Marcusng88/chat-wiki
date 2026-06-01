@@ -5,9 +5,12 @@ import { EventType } from '@ag-ui/client'
 import { createChatAgent } from '@/lib/agentClient'
 import { createClient } from '@/lib/supabase'
 import { useChatStore } from '@/store/useChatStore'
+import { useDocumentStore } from '@/store/useDocumentStore'
+import { listDocuments } from '@/lib/api'
+import { rowToDocument } from '@/lib/hooks/useDocuments'
 import { HITLPayloadSchema } from '@/lib/contract/hitl'
 import type { ChatAction } from '@/lib/contract/events'
-import type { AgentMessage, OpenUIBlock } from '@/lib/types'
+import type { OpenUIBlock } from '@/lib/types'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function agUiEventToAction(event: any): ChatAction | null {
@@ -94,7 +97,7 @@ export function useChat() {
         context: [],
         forwardedProps: {},
       })
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       .subscribe({
         next(event: any) {
           const action = agUiEventToAction(event)
@@ -135,11 +138,19 @@ export function useChat() {
             },
           },
         })
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         .subscribe({
           next(event: any) {
             const chatAction = agUiEventToAction(event)
-            if (chatAction) useChatStore.getState().dispatch(chatAction)
+            if (!chatAction) return
+            useChatStore.getState().dispatch(chatAction)
+            // Resolving a conflict mutates conflicts.status server-side. Refetch
+            // documents so the left-panel flag clears without a manual refresh.
+            if (chatAction.type === 'RUN_FINISHED') {
+              listDocuments()
+                .then((rows) => useDocumentStore.getState().setDocuments(rows.map(rowToDocument)))
+                .catch((e) => console.error('resolveHITL doc refresh failed', e))
+            }
           },
           error() {
             useChatStore.getState().dispatch({ type: 'RUN_ERROR', message: 'Connection error. Try again.' })
