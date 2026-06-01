@@ -9,7 +9,6 @@ class DocumentStatus(StrEnum):
     EMBEDDING = "embedding"
     GENERATING_WIKI = "generating_wiki"
     INDEXING = "indexing"
-    CONFLICT_SCAN = "conflict_scan"
     READY = "ready"
     FAILED_EXTRACTION = "failed_extraction"
     FAILED_EMBEDDING = "failed_embedding"

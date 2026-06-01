@@ -6,7 +6,6 @@ export const DOCUMENT_STATUS = {
   EMBEDDING: 'embedding',
   GENERATING_WIKI: 'generating_wiki',
   INDEXING: 'indexing',
-  CONFLICT_SCAN: 'conflict_scan',
   READY: 'ready',
   FAILED_EXTRACTION: 'failed_extraction',
   FAILED_EMBEDDING: 'failed_embedding',
@@ -25,7 +24,6 @@ export const PROCESSING_STATUSES = new Set<DocumentStatus>([
   DOCUMENT_STATUS.EMBEDDING,
   DOCUMENT_STATUS.GENERATING_WIKI,
   DOCUMENT_STATUS.INDEXING,
-  DOCUMENT_STATUS.CONFLICT_SCAN,
 ])
 
 export const FILE_TYPE = {

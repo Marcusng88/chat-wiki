@@ -12,14 +12,14 @@ async def update_status(document_id: str, status: str) -> str:
     """Update the processing status of a document.
 
     Use this at the start of each pipeline stage and on failure. Call in order:
-    extracting → chunking → embedding → generating_wiki → indexing → conflict_scan → ready.
+    extracting → chunking → embedding → generating_wiki → indexing → ready.
     Do NOT call with "ready" unless extract, chunk_and_embed, save_wiki, and
     save_index have all completed without error.
 
     Args:
         document_id: UUID of the document to update. Do not modify or shorten.
         status: New status value. Must be one of: uploaded, extracting, chunking,
-            embedding, generating_wiki, indexing, conflict_scan, ready,
+            embedding, generating_wiki, indexing, ready,
             failed_extraction, failed_embedding, failed_wiki, failed_indexing,
             unsupported. Use failed_<stage> only when that specific stage raised
             an error.
