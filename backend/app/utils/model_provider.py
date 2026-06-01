@@ -4,6 +4,8 @@ from langchain_openai import OpenAIEmbeddings
 from app.utils.config import settings
 
 _LLM_MODEL = "openai:gpt-5.4-mini-2026-03-17"
+# _LLM_MODEL = "openai:gpt-5.4" 
+
 
 register_harness_profile(
     _LLM_MODEL,

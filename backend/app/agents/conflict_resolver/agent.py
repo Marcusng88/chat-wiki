@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from deepagents import create_deep_agent
-from langchain.agents.middleware import ModelRetryMiddleware
+from langchain.agents.middleware import ModelRetryMiddleware, SummarizationMiddleware
 
 from app.agents.conflict_resolver.tools.flag import mark_scanned, save_conflict
 from app.agents.conflict_resolver.tools.scan import (
@@ -16,7 +16,7 @@ _AGENTS_MD = str(Path(__file__).parent / "AGENTS.md")
 
 
 def build_conflict_resolver_agent():
-    llm = get_llm()
+    llm = get_llm(temperature=0.3)
 
     tools = [
         list_unscanned_docs,
@@ -29,6 +29,7 @@ def build_conflict_resolver_agent():
 
     middleware = [
         ModelRetryMiddleware(max_retries=3, backoff_factor=2.0),
+        SummarizationMiddleware(llm=llm, trigger=("tokens", 5000),keep=("messages", 20),),
     ]
 
     return create_deep_agent(
