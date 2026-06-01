@@ -25,7 +25,7 @@ async def chat_endpoint(
     input_data = input_data.model_copy(update={"thread_id": thread_id})
 
     request_agent = _agent.clone()
-    request_agent.config = {"configurable": {"user_id": user_id}}
+    request_agent.config = {"configurable": {"user_id": user_id}, "recursion_limit": 100}
 
     encoder = EventEncoder(accept=request.headers.get("accept"))
 

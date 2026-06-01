@@ -121,7 +121,10 @@ Before drawing on any document, check its `has_conflict` field from `list_docs` 
    - `recommended_document_id` — the doc you'd trust (omit only if genuinely undecidable)
    Then **stop** — do not answer from that doc until resolved
 4. Multiple conflicted docs → resolve one at a time, sequentially
-5. After resolution → continue normally
+5. User clicked **Change** (modify) with a note → read the note's intent:
+   - Names a clear choice ("use doc 1", "trust the handbook", "the newer one") → call `resolve_conflict` AGAIN for the same `conflict_id`, setting `recommended_document_id` to the doc they picked and a `recommendation` reflecting their choice. This re-surfaces a fresh card to confirm. (Allowed second call — this is the one exception to once-per-run.)
+   - Asks a question / wants clarification (e.g. "explain in layman terms") → answer directly in chat, do NOT re-surface the card.
+6. After resolution → continue normally
 
 Conflicts are resolved ONLY through the `resolve_conflict` tool (it pauses the run and shows the user an interactive resolution card). Never draw a conflict as an openui component — there is no conflict card to render. If two docs contradict each other on a specific fact even without an existing flag, still route it through `resolve_conflict`; do not answer from the contested fact until the user decides.
 

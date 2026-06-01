@@ -18,8 +18,10 @@ async def resolve_conflict(
     Pauses agent execution until the user approves, rejects, or modifies the
     conflict. Call check_conflicts first to read the conflict's `detail`, and
     drill the relevant chunks (search_chunks) of each document so your guidance
-    is grounded in the actual evidence. Call this at most once per run — only
-    surface one conflict at a time.
+    is grounded in the actual evidence. Surface only one conflict at a time.
+    Normally call this once per run, but you MAY call it multiple times for the
+    SAME conflict when the user's previous modify note named a clear choice — re-
+    surface with that document as recommended_document_id so they confirm.
 
     Args:
         conflict_id: UUID of the conflict to resolve.
@@ -74,14 +76,24 @@ async def resolve_conflict(
 
     if action == "modify":
         # A freeform instruction only the agent can interpret. Do NOT resolve
-        # the conflict — hand the note back so the agent reasons over it. The
-        # conflict stays flagged until the user later approves or rejects.
+        # the conflict here — hand the note back so the agent reasons over it.
+        # The conflict stays flagged until the user later approves or rejects.
         note_txt = notes or "(no note provided)"
+        doc_lines = "\n".join(
+            f'  - {doc["title"]} (document_id={doc["id"]})' for doc in documents
+        )
         return (
-            f'The user did not pick a side for conflict {conflict_id}. '
-            f'They said: "{note_txt}". The conflict is still unresolved. '
-            f"Address their message directly to help them decide. Do not surface "
-            f"this same conflict again in this turn."
+            f'The user did not approve or reject conflict {conflict_id} yet. '
+            f'They said: "{note_txt}". The conflict is still unresolved.\n'
+            f"Documents in this conflict:\n{doc_lines}\n\n"
+            f"Interpret their note:\n"
+            f"- If it names a clear choice (e.g. \"use doc 1\", \"trust the "
+            f"handbook\", \"go with the newer one\"), call resolve_conflict AGAIN "
+            f"for this same conflict_id with recommended_document_id set to the "
+            f"document they chose and a recommendation that reflects their pick. "
+            f"That re-surfaces a fresh card so they confirm the final decision.\n"
+            f"- If it is a question or asks for clarification/explanation, answer "
+            f"it directly in chat and do NOT re-surface the card."
         )
 
     await resolve_conflict_db(conflict_id, action, preferred_doc_id, notes, user_id)
