@@ -2,9 +2,11 @@ from pathlib import Path
 
 from deepagents import create_deep_agent
 from deepagents.backends.filesystem import FilesystemBackend
-from langchain.agents.middleware import ModelRetryMiddleware
+from langchain.agents.middleware import ModelRetryMiddleware, ToolCallLimitMiddleware
 from langgraph.checkpoint.memory import MemorySaver
 from ag_ui_langgraph import LangGraphAgent
+
+from app.agents.chat.middleware import conflict_guard
 
 from app.agents.chat.tools import (
     list_docs,
@@ -39,7 +41,15 @@ def build_chat_agent() -> LangGraphAgent:
         subagents=[],
         memory=[_AGENTS_MD, _OPENUI_PROMPT_FILE],
         backend=_BACKEND_ROOT,
-        middleware=[ModelRetryMiddleware(max_retries=3, backoff_factor=2.0)],
+        middleware=[
+            # Harness enforce: model can't end a turn with an unsurfaced conflict.
+            # Runs first so its after_model sees the model's final output.
+            conflict_guard,
+            # Bound the forced drilling loop so it can't spam tools.
+            ToolCallLimitMiddleware(run_limit=20, exit_behavior="continue"),
+            # Transient model-call errors → retry with backoff.
+            ModelRetryMiddleware(max_retries=3, backoff_factor=2.0),
+        ],
         checkpointer=_checkpointer,
         name="chat-agent",
         debug=True,
