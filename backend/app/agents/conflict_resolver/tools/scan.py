@@ -81,7 +81,7 @@ async def get_doc_evidence(
         limit: Number of chunks to return (default 5, max 10).
 
     Returns:
-        List of raw chunks with content, chunk_index, page_ref. Empty if not found.
+        List of raw chunks with content, chunk_index. Empty if not found.
     """
     user_id = config["configurable"]["user_id"]
     limit = min(limit, 10)

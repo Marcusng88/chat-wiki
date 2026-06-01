@@ -93,7 +93,7 @@ async def fetch_doc_chunks(
                 return []
             await cur.execute(
                 """
-                SELECT content, chunk_index, page_ref
+                SELECT content, chunk_index
                 FROM chunks
                 WHERE document_id = %s
                 ORDER BY embedding <=> %s::vector

@@ -157,7 +157,7 @@ async def search_chunks(
         limit: Number of chunks to return (default 5, max 10).
 
     Returns:
-        List of chunks with content, chunk_index, page_ref.
+        List of chunks with content, chunk_index.
     """
     user_id = config["configurable"]["user_id"]
     limit = min(limit, 10)
@@ -177,7 +177,7 @@ async def search_chunks(
         async with conn.cursor(row_factory=dict_row) as cur:
             await cur.execute(
                 """
-                SELECT content, chunk_index, page_ref
+                SELECT content, chunk_index
                 FROM chunks
                 WHERE document_id = %s
                 ORDER BY embedding <=> %s::vector
@@ -206,7 +206,7 @@ async def vector_search(
         limit: Number of chunks to return (default 8, max 20).
 
     Returns:
-        List of chunks with content, relevance_score, doc_title, doc_id, page_ref.
+        List of chunks with content, relevance_score, doc_title, doc_id.
     """
     user_id = config["configurable"]["user_id"]
     limit = min(limit, 20)
@@ -219,7 +219,6 @@ async def vector_search(
                 """
                 SELECT
                     c.content,
-                    c.page_ref,
                     d.id::text AS doc_id,
                     d.title AS doc_title,
                     1 - (c.embedding <=> %s::vector) AS relevance_score

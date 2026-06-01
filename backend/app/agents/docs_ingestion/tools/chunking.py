@@ -1,5 +1,4 @@
 import logging
-import re
 from langchain_core.tools import tool
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from psycopg.rows import dict_row
@@ -11,31 +10,6 @@ logger = logging.getLogger(__name__)
 
 _splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
 EMBEDDING_MODEL = "text-embedding-3-small"
-
-# Page/slide markers injected by extract_text, e.g. "[Page 3]", "[Slide 4]",
-# "[Page 3 Image 1]". We lift them into the chunks.page_ref column for citations.
-_PAGE_MARKER = re.compile(r"\[(Page|Slide) (\d+)")
-
-
-def derive_page_refs(chunks: list[str]) -> list[str | None]:
-    """Map each chunk to a page/slide reference parsed from extract_text markers.
-
-    A chunk's page_ref is the first marker found inside it. Chunks without a
-    marker (overlap splits) inherit the last marker seen in a prior chunk.
-    Returns None for chunks before any marker appears.
-    """
-    refs: list[str | None] = []
-    carried: str | None = None
-    for chunk in chunks:
-        matches = _PAGE_MARKER.findall(chunk)
-        if matches:
-            kind, num = matches[0]
-            refs.append(f"{kind} {num}")
-            last_kind, last_num = matches[-1]
-            carried = f"{last_kind} {last_num}"
-        else:
-            refs.append(carried)
-    return refs
 
 
 @tool(parse_docstring=True)
@@ -80,21 +54,19 @@ async def chunk_and_embed(document_id: str, text: str) -> int:
         raise
     logger.info("[chunk_and_embed] doc=%s got %d vectors", document_id, len(vectors))
 
-    page_refs = derive_page_refs(chunks)
-
     try:
         async with get_conn() as conn:
             async with conn.cursor(row_factory=dict_row) as cur:
                 await cur.execute("DELETE FROM chunks WHERE document_id = %s", (document_id,))
                 logger.info("[chunk_and_embed] doc=%s old chunks deleted", document_id)
 
-                for idx, (chunk_text, vector, page_ref) in enumerate(zip(chunks, vectors, page_refs)):
+                for idx, (chunk_text, vector) in enumerate(zip(chunks, vectors)):
                     await cur.execute(
                         """
-                        INSERT INTO chunks (document_id, chunk_index, content, page_ref, embedding, embedding_model)
-                        VALUES (%s, %s, %s, %s, %s::vector, %s)
+                        INSERT INTO chunks (document_id, chunk_index, content, embedding, embedding_model)
+                        VALUES (%s, %s, %s, %s::vector, %s)
                         """,
-                        (document_id, idx, chunk_text, page_ref, str(vector), EMBEDDING_MODEL),
+                        (document_id, idx, chunk_text, str(vector), EMBEDDING_MODEL),
                     )
                 logger.info("[chunk_and_embed] doc=%s inserted %d rows", document_id, len(chunks))
     except Exception:

@@ -20,17 +20,17 @@ def _extract_pdf(data: bytes) -> str:
     parts: list[str] = []
     llm = None
 
-    for page_num, page in enumerate(doc, start=1):
+    for page in doc:
         text = page.get_text().strip()
         if text:
-            parts.append(f"[Page {page_num}]\n{text}")
+            parts.append(text)
 
         # Pages with little text but images → describe images via LLM
         image_list = page.get_images(full=True)
         if image_list and len(text) < 100:
             if llm is None:
                 llm = get_llm()
-            for img_index, img_info in enumerate(image_list):
+            for img_info in image_list:
                 xref = img_info[0]
                 base_image = doc.extract_image(xref)
                 img_bytes = base_image["image"]
@@ -43,7 +43,7 @@ def _extract_pdf(data: bytes) -> str:
                     ]
                 )
                 description = llm.invoke([msg]).content
-                parts.append(f"[Page {page_num} Image {img_index + 1}]\n{description}")
+                parts.append(description)
 
     return "\n\n".join(parts)
 
@@ -54,7 +54,7 @@ def _extract_pptx(data: bytes) -> str:
     prs = Presentation(io.BytesIO(data))
     parts: list[str] = []
 
-    for slide_num, slide in enumerate(prs.slides, start=1):
+    for slide in prs.slides:
         texts = []
         for shape in slide.shapes:
             if shape.has_text_frame:
@@ -67,7 +67,7 @@ def _extract_pptx(data: bytes) -> str:
             if notes:
                 texts.append(f"[Notes] {notes}")
         if texts:
-            parts.append(f"[Slide {slide_num}]\n" + "\n".join(texts))
+            parts.append("\n".join(texts))
 
     return "\n\n".join(parts)
 
@@ -119,9 +119,8 @@ async def extract_text(document_id: str) -> str:
     exactly once per document. The returned text must be passed directly to
     chunk_and_embed — do not modify or truncate it.
 
-    Supports: pdf, pptx, md, txt, image. For PDF and PPTX, page/slide numbers
-    are included as markers (e.g. [Page 3]). Image-heavy pages are described
-    via LLM. For standalone image files the entire content is an LLM description.
+    Supports: pdf, pptx, md, txt, image. Image-heavy pages are described via
+    LLM. For standalone image files the entire content is an LLM description.
 
     Args:
         document_id: UUID of the document to extract. Use exactly as provided.
