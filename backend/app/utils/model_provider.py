@@ -1,4 +1,4 @@
-from deepagents import HarnessProfile, register_harness_profile
+from deepagents import HarnessProfile, register_harness_profile, GeneralPurposeSubagentProfile
 from langchain.chat_models import init_chat_model
 from langchain_openai import OpenAIEmbeddings
 from app.utils.config import settings
@@ -9,6 +9,8 @@ register_harness_profile(
     _LLM_MODEL,
     HarnessProfile(
         excluded_tools=frozenset({"ls", "read_file", "write_file", "edit_file", "glob", "grep"}),
+        general_purpose_subagent=GeneralPurposeSubagentProfile(enabled=False)
+
     ),
 )
 

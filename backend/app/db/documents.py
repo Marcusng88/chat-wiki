@@ -53,6 +53,7 @@ async def fetch_document_list(user_id: str) -> list[dict]:
                     d.summary,
                     COALESCE(d.topics, '{}') AS topics,
                     d.created_at,
+                    d.scanned_at IS NOT NULL AS scanned,
                     EXISTS(
                         SELECT 1 FROM conflict_documents cd
                         JOIN conflicts c ON c.id = cd.conflict_id
@@ -81,6 +82,22 @@ async def fetch_chunks(document_id: str) -> list[dict]:
 async def remove_document(document_id: str, user_id: str) -> None:
     async with get_conn() as conn:
         async with conn.cursor() as cur:
+            # Delete any conflicts this document participates in. conflict_documents
+            # rows cascade from both the conflict and the document FKs.
+            await cur.execute(
+                """
+                DELETE FROM conflicts
+                WHERE user_id = %s
+                  AND (
+                    id IN (
+                        SELECT conflict_id FROM conflict_documents
+                        WHERE document_id = %s
+                    )
+                    OR preferred_document_id = %s
+                  )
+                """,
+                (user_id, document_id, document_id),
+            )
             await cur.execute(
                 "DELETE FROM documents WHERE id = %s AND user_id = %s",
                 (document_id, user_id),

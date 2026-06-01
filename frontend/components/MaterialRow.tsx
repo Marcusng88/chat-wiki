@@ -6,7 +6,7 @@ import { FILE_TYPE_ICON_CLASS } from '@/lib/types'
 import { FileIcon, Alert, More, Eye, Trash } from './Icons'
 
 const FAILED_STATUSES = new Set(['failed', 'failed_extraction', 'failed_embedding', 'failed_wiki', 'failed_indexing'])
-const PROCESSING_STATUSES = new Set(['uploaded', 'extracting', 'chunking', 'embedding', 'generating_wiki', 'indexing', 'conflict_scan'])
+const PROCESSING_STATUSES = new Set(['uploaded', 'extracting', 'chunking', 'embedding', 'generating_wiki', 'indexing'])
 
 function StatusBadge({ doc }: { doc: Document }) {
   if (doc.status === 'ready')

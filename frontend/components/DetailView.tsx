@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import type { Document } from '@/lib/types'
 import { Back } from './Icons'
 import Markdown from './Markdown'
@@ -20,14 +20,15 @@ export default function DetailView({ doc, onBack }: Props) {
   const [rawText, setRawText] = useState<string | null>(null)
   const [rawLoading, setRawLoading] = useState(false)
 
-  useEffect(() => {
-    if (tab !== 'raw' || rawText !== null || rawLoading) return
+  function openRaw() {
+    setTab('raw')
+    if (rawText !== null || rawLoading) return
     setRawLoading(true)
     getDocumentRaw(doc.id)
       .then((text) => setRawText(text))
       .catch(() => setRawText(''))
       .finally(() => setRawLoading(false))
-  }, [tab, doc.id, rawText, rawLoading])
+  }
 
   return (
     <div className="detail-view">
@@ -36,7 +37,6 @@ export default function DetailView({ doc, onBack }: Props) {
         <div className="detail-title">{doc.title}</div>
         <div className="detail-meta">
           <span className="pill">{FILE_LABEL[doc.fileType] ?? doc.fileType}</span>
-          <span className="pill">{doc.size}</span>
           <span className="pill">{doc.pages} {doc.pages === 1 ? 'page' : 'pages'}</span>
           <span className="pill">added {doc.addedAt}</span>
           {doc.hasConflict && (
@@ -47,7 +47,7 @@ export default function DetailView({ doc, onBack }: Props) {
 
       <div className="detail-tabs">
         <button className={`detail-tab${tab === 'wiki' ? ' active' : ''}`} onClick={() => setTab('wiki')}>Wiki</button>
-        <button className={`detail-tab${tab === 'raw' ? ' active' : ''}`} onClick={() => setTab('raw')}>Raw</button>
+        <button className={`detail-tab${tab === 'raw' ? ' active' : ''}`} onClick={openRaw}>Raw</button>
         <button className={`detail-tab${tab === 'meta' ? ' active' : ''}`} onClick={() => setTab('meta')}>Metadata</button>
       </div>
 

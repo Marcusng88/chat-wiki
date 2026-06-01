@@ -1,12 +1,12 @@
 'use client'
 
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { useDocumentStore, useActiveConflicts } from '@/store/useDocumentStore'
 import { useUIStore } from '@/store/useUIStore'
 import { useConfirm } from '@/lib/hooks/useConfirm'
-import { useDocuments } from '@/lib/hooks/useDocuments'
+import { useDocuments, rowToDocument } from '@/lib/hooks/useDocuments'
 import { useDocumentUpload } from '@/lib/hooks/useDocumentUpload'
-import { deleteDocument } from '@/lib/api'
+import { deleteDocument, listDocuments, resolveConflicts } from '@/lib/api'
 import MaterialRow from './MaterialRow'
 import UploadZone from './UploadZone'
 import DetailView from './DetailView'
@@ -26,6 +26,7 @@ export default function LeftPanel() {
   const requestConfirm = useConfirm()
   const selectedDoc = documents.find((d) => d.id === selectedDocId)
   const { upload: onUpload } = useDocumentUpload()
+  const [scanning, setScanning] = useState(false)
 
   useDocuments()
 
@@ -62,8 +63,31 @@ export default function LeftPanel() {
       cancelText: 'Not now',
     })
     if (!ok) return
-    // TODO: call POST /agent/resolve
-  }, [requestConfirm])
+    setScanning(true)
+    try {
+      await resolveConflicts()
+    } catch (e) {
+      console.error('resolve failed', e)
+      setScanning(false)
+      return
+    }
+    // Resolver runs in the background and only flips has_conflict (not status),
+    // so the status poll won't catch it — re-poll documents for a short window.
+    let ticks = 0
+    const id = setInterval(async () => {
+      ticks += 1
+      try {
+        const rows = await listDocuments()
+        setDocuments(rows.map(rowToDocument))
+      } catch (e) {
+        console.error('resolve refetch failed', e)
+      }
+      if (ticks >= 10) {
+        clearInterval(id)
+        setScanning(false)
+      }
+    }, 3000)
+  }, [requestConfirm, setDocuments])
 
   function onToggleCollapsed() {
     setLeftCollapsed((v) => {
@@ -73,6 +97,8 @@ export default function LeftPanel() {
   }
 
   const readyCount = documents.filter((d) => d.status === 'ready').length
+  const hasUnscanned = documents.some((d) => d.status === 'ready' && !d.scanned)
+  const resolverDisabled = scanning || !hasUnscanned
 
   return (
     <>
@@ -122,23 +148,34 @@ export default function LeftPanel() {
               ))}
             </div>
           </div>
-          {activeConflicts.length > 0 && (
-            <div className="resolver-bar">
-              <button className="resolver-btn" onClick={onResolverClick}>
-                <span className="resolver-icon"><Sparkle /></span>
-                <span className="resolver-text">
-                  <span className="resolver-title">Check for conflicts</span>
-                  <span className="resolver-sub">
-                    Spots disagreements between your files — the assistant asks before anything changes.
-                  </span>
+          <div className="resolver-bar">
+            <button
+              className="resolver-btn"
+              onClick={onResolverClick}
+              disabled={resolverDisabled}
+              aria-busy={scanning}
+            >
+              <span className="resolver-icon"><Sparkle /></span>
+              <span className="resolver-text">
+                <span className="resolver-title">
+                  {scanning ? 'Checking…' : hasUnscanned ? 'Check for conflicts' : 'All files checked'}
                 </span>
+                <span className="resolver-sub">
+                  {scanning
+                    ? 'Scanning your files for disagreements — this runs in the background.'
+                    : hasUnscanned
+                      ? 'Spots disagreements between your files — the assistant asks before anything changes.'
+                      : 'Nothing new to check. Upload more files to run another scan.'}
+                </span>
+              </span>
+              {activeConflicts.length > 0 && (
                 <span className="resolver-count">
                   <span className="n">{activeConflicts.length}</span>
                   <span className="lbl">flagged</span>
                 </span>
-              </button>
-            </div>
-          )}
+              )}
+            </button>
+          </div>
         </>
       )}
 

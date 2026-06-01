@@ -67,6 +67,29 @@
   color: transparent;
 }
 .hitl-source.selected .check { background: var(--accent); border-color: var(--accent); color: #0a0a0a; }
+.hitl-source .stance { font-size: 11px; color: var(--text-secondary); line-height: 1.45; }
+.hitl-source .rec-tag {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.hitl-conflict-detail {
+  font-size: 12px;
+  color: var(--text-primary);
+  line-height: 1.55;
+  margin-bottom: 12px;
+}
+.hitl-section-label {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
 
 .hitl-recommend {
   font-size: 11px;
@@ -79,6 +102,29 @@
   line-height: 1.55;
 }
 .hitl-recommend strong { color: var(--accent); font-weight: 400; }
+
+.hitl-note-wrap { margin-bottom: 12px; }
+.hitl-note-input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  background: rgba(0, 0, 0, 0.18);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.55;
+  resize: vertical;
+}
+.hitl-note-input::placeholder { color: var(--text-muted); }
+.hitl-note-input:focus {
+  outline: none;
+  border-color: var(--accent-ring);
+  background: var(--accent-dim);
+}
 
 .hitl-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
@@ -307,6 +353,7 @@
 [data-theme="light"] .hitl-card { background: linear-gradient(180deg, rgba(249, 115, 22, 0.05) 0%, rgba(249, 115, 22, 0.015) 100%); }
 [data-theme="light"] .hitl-head { background: rgba(249, 115, 22, 0.06); }
 [data-theme="light"] .hitl-source { background: var(--surface-recess); }
+[data-theme="light"] .hitl-note-input { background: var(--surface-recess); }
 [data-theme="light"] .hitl-recommend { background: var(--surface-soft-2); }
 [data-theme="light"] .hitl-btn:hover { background: var(--surface-soft); }
 [data-theme="light"] .kp-source-row { background: var(--surface-recess); }

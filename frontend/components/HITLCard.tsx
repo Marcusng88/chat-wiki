@@ -10,15 +10,17 @@ interface Props {
 }
 
 export default function HITLCard({ msg, onResolve }: Props) {
-  const [picked, setPicked] = useState(msg.sources[0]?.id ?? '')
-  const [done, setDone] = useState(false)
+  const [picked, setPicked] = useState(msg.recommendedId ?? msg.sources[0]?.id ?? '')
+  const [resolvedAs, setResolvedAs] = useState<'approve' | 'reject' | 'modify' | null>(null)
   const [showNoteInput, setShowNoteInput] = useState(false)
   const [note, setNote] = useState('')
 
   if (!msg.sources?.length) return null
 
-  if (done) {
+  if (resolvedAs) {
     const pickedSrc = msg.sources.find((s) => s.id === picked)
+    const headTitle =
+      resolvedAs === 'approve' ? 'Saved your choice' : resolvedAs === 'reject' ? 'Skipped' : 'Sent to assistant'
     return (
       <div
         className="hitl-card"
@@ -29,12 +31,22 @@ export default function HITLCard({ msg, onResolve }: Props) {
           style={{ background: 'rgba(34,197,94,0.06)', borderBottomColor: 'rgba(34,197,94,0.20)' }}
         >
           <span className="badge" style={{ background: 'var(--status-ready)' }}>got it</span>
-          <span className="title">Saved your choice</span>
+          <span className="title">{headTitle}</span>
         </div>
         <div className="hitl-body" style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
-          ✓ From now on I&apos;ll lean on{' '}
-          <code style={{ color: 'var(--status-ready)' }}>{pickedSrc?.name}</code>{' '}
-          for this topic. The other file stays in your library, untouched.
+          {resolvedAs === 'approve' && (
+            <>
+              ✓ From now on I&apos;ll lean on{' '}
+              <code style={{ color: 'var(--status-ready)' }}>{pickedSrc?.name}</code>{' '}
+              for this topic. The other file stays in your library, untouched.
+            </>
+          )}
+          {resolvedAs === 'reject' && (
+            <>✓ Skipped — both files stay in your library, untouched.</>
+          )}
+          {resolvedAs === 'modify' && (
+            <>✓ Sent your note to the assistant. The conflict stays open until you pick a file.</>
+          )}
         </div>
       </div>
     )
@@ -48,6 +60,12 @@ export default function HITLCard({ msg, onResolve }: Props) {
         <span className="req-id">paused</span>
       </div>
       <div className="hitl-body">
+        {msg.explanation && (
+          <div className="hitl-conflict-detail">
+            <span className="hitl-section-label">What&apos;s conflicting</span>
+            <Markdown md={msg.explanation} onCite={() => {}} />
+          </div>
+        )}
         <div className="hitl-sources">
           {msg.sources.map((s) => (
             <div
@@ -55,7 +73,9 @@ export default function HITLCard({ msg, onResolve }: Props) {
               className={`hitl-source${picked === s.id ? ' selected' : ''}`}
               onClick={() => setPicked(s.id)}
             >
+              {s.id === msg.recommendedId && <span className="rec-tag">recommended</span>}
               <span className="name">{s.name}</span>
+              {s.stance && <span className="stance">{s.stance}</span>}
               <span className="date">{s.date}</span>
               <span className="check"><Check /></span>
             </div>
@@ -78,7 +98,7 @@ export default function HITLCard({ msg, onResolve }: Props) {
               <button
                 className="hitl-btn primary"
                 disabled={!note.trim()}
-                onClick={() => { setDone(true); onResolve?.('modify', note.trim()) }}
+                onClick={() => { setResolvedAs('modify'); onResolve?.('modify', note.trim()) }}
               >
                 Send note
               </button>
@@ -91,14 +111,14 @@ export default function HITLCard({ msg, onResolve }: Props) {
           <div className="hitl-actions">
             <button
               className="hitl-btn primary"
-              onClick={() => { setDone(true); onResolve?.(picked) }}
+              onClick={() => { setResolvedAs('approve'); onResolve?.(picked) }}
             >
               <Check /> Use this one
             </button>
             <button className="hitl-btn" onClick={() => setShowNoteInput(true)}>
               Change something
             </button>
-            <button className="hitl-btn danger" onClick={() => { setDone(true); onResolve?.('reject') }}>
+            <button className="hitl-btn danger" onClick={() => { setResolvedAs('reject'); onResolve?.('reject') }}>
               Skip
             </button>
           </div>

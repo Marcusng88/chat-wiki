@@ -25,6 +25,7 @@ export interface DocumentResponse {
   file_type: string
   status: string
   has_conflict: boolean
+  scanned: boolean
   created_at: string
   wiki_page: string | null
   summary: string | null
@@ -45,6 +46,10 @@ export function presignDocument(filename: string, file_type: string, title: stri
     method: 'POST',
     body: JSON.stringify({ filename, file_type, title }),
   })
+}
+
+export function resolveConflicts(): Promise<void> {
+  return apiFetch('/agent/resolve', { method: 'POST' })
 }
 
 export function confirmDocument(document_id: string): Promise<void> {
