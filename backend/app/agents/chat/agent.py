@@ -43,5 +43,5 @@ def build_chat_agent() -> LangGraphAgent:
         checkpointer=_checkpointer,
         name="chat-agent",
         debug=True,
-    ).with_config({"recursion_limit": 100})
+    )
     return LangGraphAgent(name="chat-agent", graph=graph)
