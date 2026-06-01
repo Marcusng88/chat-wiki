@@ -45,7 +45,7 @@ When the assistant retrieves evidence to answer you and finds a flagged conflict
 | Database | **Supabase Postgres + pgvector** | Relational data + vector search in one place. |
 | Storage / Auth / Realtime | **Supabase** | Direct file upload, JWT auth, live status updates. |
 
-A short rationale for the bigger architectural decisions lives in **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**.
+A short rationale for the bigger architectural decisions lives in **[docs/ARCHITECTURE.md](ARCHITECTURE.md)**.
 
 ---
 
