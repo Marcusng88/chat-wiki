@@ -1,1 +1,9 @@
 docs/DEMO_SCRIPT.md
+
+# Agent instruction files (local only)
+/AGENTS.md
+/CLAUDE.md
+/backend/AGENTS.md
+/backend/CLAUDE.md
+/frontend/AGENTS.md
+/frontend/CLAUDE.md
