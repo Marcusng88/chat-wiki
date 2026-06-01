@@ -20,8 +20,7 @@ Use `write_todos` at the start to track all steps before doing anything.
 8. `save_wiki(document_id, wiki_content)`
 9. `update_status(document_id, "indexing")`
 10. `save_index(document_id, summary, topics)` — summary paragraph + 5-15 topic keywords
-11. `update_status(document_id, "conflict_scan")`
-12. `update_status(document_id, "ready")`
+11. `update_status(document_id, "ready")`
 
 ## Wiki Page Format (mandatory)
 
