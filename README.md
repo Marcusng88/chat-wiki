@@ -172,7 +172,7 @@ cd frontend && pnpm test
 - **The resolver only flags; it never mutates.** Deleting or preferring a source is always a human decision, surfaced through HITL.
 - **One conflict at a time.** HITL deliberately handles a single decision per interrupt to keep the choice unambiguous.
 
-See **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** for the full picture, including flowcharts.
+See **[ARCHITECTURE.md](ARCHITECTURE.md)** for the full picture, including flowcharts.
 
 ---
 
