@@ -1,4 +1,4 @@
-# chat-wiki
+# Chat-Wiki
 
 **Turn a pile of documents into a chat-able, self-organizing knowledge base — one that knows when its own sources disagree and asks you which to trust.**
 
@@ -13,17 +13,17 @@ Three short clips walk through the product end to end.
 ### 1. Document ingestion → wiki + index
 Drop a file → live status (`extract → chunk → embed → wiki → index`) → it becomes `ready` and queryable.
 
-https://github.com/Marcusng88/chat-wiki/raw/main/assets/docs_ingestion_demo.mp4
+https://github.com/user-attachments/assets/ed530d1f-a548-4f9f-a3ab-6f760de0fb0b
 
 ### 2. Generative UI
 The assistant answers by emitting rich UI cards (charts, tables, comparisons) instead of plain text.
 
-https://github.com/Marcusng88/chat-wiki/raw/main/assets/generative_ui_demo.mp4
+https://github.com/user-attachments/assets/f5291860-9d06-4337-be93-18262ce2248e
 
 ### 3. Conflict governance (human-in-the-loop)
 Two sources disagree → the assistant pauses mid-answer, surfaces a decision card, and resumes on your call.
 
-https://github.com/Marcusng88/chat-wiki/raw/main/assets/user_governance_hitl_demo.mp4
+https://github.com/user-attachments/assets/6a595193-4a80-46fd-b3bd-110f81959f6b
 
 ---
 
