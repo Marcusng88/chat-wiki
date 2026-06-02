@@ -142,7 +142,8 @@ body.resizing .resizer::before { background: var(--accent); height: 56px; }
 /* ── Mobile ── */
 @media (max-width: 880px) {
   .shell { padding: 12px; }
-  .shell-inner { grid-template-columns: 1fr; }
+  .shell-inner,
+  .shell-inner.left-collapsed { grid-template-columns: 1fr; }
   .resizer { display: none; }
   .panel.left-panel {
     position: fixed;
