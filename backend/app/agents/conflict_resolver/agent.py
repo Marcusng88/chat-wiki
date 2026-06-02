@@ -29,7 +29,6 @@ def build_conflict_resolver_agent():
 
     middleware = [
         ModelRetryMiddleware(max_retries=3, backoff_factor=2.0),
-        SummarizationMiddleware(llm=llm, trigger=("tokens", 5000),keep=("messages", 20),),
     ]
 
     return create_deep_agent(

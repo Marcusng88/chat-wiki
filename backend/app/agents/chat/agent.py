@@ -2,7 +2,11 @@ from pathlib import Path
 
 from deepagents import create_deep_agent
 from deepagents.backends.filesystem import FilesystemBackend
-from langchain.agents.middleware import ModelRetryMiddleware, ToolCallLimitMiddleware
+from langchain.agents.middleware import (
+    ModelRetryMiddleware,
+    SummarizationMiddleware,
+    ToolCallLimitMiddleware,
+)
 from langgraph.checkpoint.memory import MemorySaver
 from ag_ui_langgraph import LangGraphAgent
 
@@ -46,7 +50,7 @@ def build_chat_agent() -> LangGraphAgent:
             # Runs first so its after_model sees the model's final output.
             conflict_guard,
             # Bound the forced drilling loop so it can't spam tools.
-            ToolCallLimitMiddleware(run_limit=20, exit_behavior="continue"),
+            ToolCallLimitMiddleware(run_limit=15, exit_behavior="continue"),
             # Transient model-call errors → retry with backoff.
             ModelRetryMiddleware(max_retries=3, backoff_factor=2.0),
         ],
