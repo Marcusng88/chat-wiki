@@ -1,5 +1,5 @@
 'use client'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { useChatStore } from '@/store/useChatStore'
 import { useDocumentStore } from '@/store/useDocumentStore'
 import { useUIStore } from '@/store/useUIStore'
@@ -7,7 +7,8 @@ import { useConfirm } from '@/lib/hooks/useConfirm'
 import { useChat } from '@/lib/hooks/useChat'
 import { DOCUMENT_STATUS } from '@/lib/types'
 import MessageItem from './MessageItem'
-import { Plus, Send, Sparkle } from './Icons'
+import ChatInput from './ChatInput'
+import { Plus, Sparkle } from './Icons'
 
 const STARTERS = [
   'Summarize my sources',
@@ -21,35 +22,21 @@ export default function ChatPanel() {
   const { setLeftCollapsed } = useUIStore()
   const chat = useChat()
   const requestConfirm = useConfirm()
-  const [input, setInput] = useState('')
-  const inputRef = useRef('')
-  const taRef = useRef<HTMLTextAreaElement>(null)
   const bodyRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (bodyRef.current) bodyRef.current.scrollTop = bodyRef.current.scrollHeight
   }, [messages, isStreaming])
 
-  const autoSize = useCallback(() => {
-    const ta = taRef.current
-    if (!ta) return
-    ta.style.height = 'auto'
-    ta.style.height = Math.min(132, Math.max(22, ta.scrollHeight)) + 'px'
-  }, [])
-
-  useEffect(() => { autoSize() }, [input, autoSize])
-
   const openDoc = useCallback((id: string) => {
     setLeftCollapsed(false)
     openDocument(id)
   }, [setLeftCollapsed, openDocument])
 
-  const send = useCallback((textOverride?: string) => {
-    const text = (typeof textOverride === 'string' ? textOverride : inputRef.current).trim()
-    if (!text || isStreaming || pendingHITL) return
-    inputRef.current = ''
-    setInput('')
-    chat.send(text)
+  const send = useCallback((text: string) => {
+    const t = text.trim()
+    if (!t || isStreaming || pendingHITL) return
+    chat.send(t)
   }, [isStreaming, pendingHITL, chat])
 
   const resolveHITL = useCallback((choice: string, notes?: string) => {
@@ -133,41 +120,12 @@ export default function ChatPanel() {
         )}
       </div>
 
-      <div className="chat-input-wrap">
-        <div className={`chat-input${isStreaming || pendingHITL ? ' disabled' : ''}`}>
-          <textarea
-            ref={taRef}
-            value={input}
-            onChange={(e) => { inputRef.current = e.target.value; setInput(e.target.value) }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() }
-            }}
-            placeholder={
-              isStreaming
-                ? 'agent is responding…'
-                : pendingHITL
-                ? 'resolve the conflict card above to continue…'
-                : 'ask about your knowledge — enter to send, shift+enter newline'
-            }
-            rows={1}
-          />
-          <div className="chat-input-bottom">
-            <span className="scope-chip">
-              <span className="pip" />
-              {readyCount} sources in scope
-            </span>
-            <span className="hint">⏎ send · ⇧⏎ newline</span>
-            <button
-              className="send"
-              onClick={() => send()}
-              disabled={!input.trim() || isStreaming || pendingHITL}
-              aria-label="Send"
-            >
-              <Send />
-            </button>
-          </div>
-        </div>
-      </div>
+      <ChatInput
+        onSend={send}
+        isStreaming={isStreaming}
+        pendingHITL={!!pendingHITL}
+        readyCount={readyCount}
+      />
     </>
   )
 }
