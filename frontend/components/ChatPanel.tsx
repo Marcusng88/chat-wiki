@@ -12,8 +12,8 @@ import { Plus, Sparkle } from './Icons'
 
 const STARTERS = [
   'Summarize my sources',
-  'What do these documents disagree on?',
-  'Give me the key takeaways',
+  'List my sources',
+  'Give me the key takeaways for a random source',
 ]
 
 export default function ChatPanel() {

@@ -56,6 +56,9 @@
   position: absolute;
   inset: 0 -6px;
 }
+/* While dragging, the grid must track the pointer 1:1 — the column transition
+   would otherwise animate toward each mousemove value and lag the resize. */
+body.resizing .shell-inner { transition: none; }
 body.resizing { cursor: col-resize; user-select: none; }
 body.resizing .resizer::before { background: var(--accent); height: 56px; }
 
