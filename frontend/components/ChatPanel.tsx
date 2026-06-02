@@ -90,7 +90,6 @@ export default function ChatPanel() {
       <div className="chat-body" ref={bodyRef}>
         {messages.length === 0 ? (
           <div className="chat-empty">
-            <div className="ce-glow" />
             <div className="ce-glyph"><Sparkle width={22} height={22} /></div>
             {readyCount === 0 ? (
               <>
