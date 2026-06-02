@@ -53,13 +53,6 @@ def build_chat_agent() -> LangGraphAgent:
             ToolCallLimitMiddleware(run_limit=15, exit_behavior="continue"),
             # Transient model-call errors → retry with backoff.
             ModelRetryMiddleware(max_retries=3, backoff_factor=2.0),
-            # Compact long chats so the window never overflows: keep recent
-            # turns verbatim, summarize older ones. Low temp for faithful recall.
-            SummarizationMiddleware(
-                llm=get_llm(temperature=0.2),
-                trigger=("tokens", 8000),
-                keep=("messages", 20),
-            ),
         ],
         checkpointer=_checkpointer,
         name="chat-agent",
