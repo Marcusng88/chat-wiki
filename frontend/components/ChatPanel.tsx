@@ -7,7 +7,13 @@ import { useConfirm } from '@/lib/hooks/useConfirm'
 import { useChat } from '@/lib/hooks/useChat'
 import { DOCUMENT_STATUS } from '@/lib/types'
 import MessageItem from './MessageItem'
-import { Plus, Send } from './Icons'
+import { Plus, Send, Sparkle } from './Icons'
+
+const STARTERS = [
+  'Summarize my sources',
+  'What do these documents disagree on?',
+  'Give me the key takeaways',
+]
 
 export default function ChatPanel() {
   const { messages, isStreaming, pendingHITL, clearMessages } = useChatStore()
@@ -82,15 +88,50 @@ export default function ChatPanel() {
       </div>
 
       <div className="chat-body" ref={bodyRef}>
-        {messages.map((m) => (
-          <MessageItem
-            key={m.id}
-            msg={m}
-            onOpenDoc={openDoc}
-            onResolveHitl={resolveHITL}
-            onQuery={send}
-          />
-        ))}
+        {messages.length === 0 ? (
+          <div className="chat-empty">
+            <div className="ce-glow" />
+            <div className="ce-glyph"><Sparkle width={22} height={22} /></div>
+            {readyCount === 0 ? (
+              <>
+                <div className="ce-title">Add your sources.</div>
+                <div className="ce-sub">Upload a document and I’ll answer with citations.</div>
+                <div className="suggestion-chips">
+                  <button className="suggestion-chip" onClick={() => setLeftCollapsed(false)}>
+                    <span className="arrow">↗</span> Reveal sources panel
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="ce-title">Ask your knowledge.</div>
+                <div className="ce-sub">
+                  <span className="num">{readyCount}</span> {readyCount === 1 ? 'source' : 'sources'} indexed · answers come cited
+                </div>
+                <div className="suggestion-chips">
+                  {STARTERS.map((s) => (
+                    <button key={s} className="suggestion-chip" onClick={() => send(s)}>
+                      <span className="arrow">↗</span> {s}
+                    </button>
+                  ))}
+                </div>
+                <div className="ce-cap">
+                  cited <span className="dot" /> conflict-aware <span className="dot" /> {readyCount} in scope
+                </div>
+              </>
+            )}
+          </div>
+        ) : (
+          messages.map((m) => (
+            <MessageItem
+              key={m.id}
+              msg={m}
+              onOpenDoc={openDoc}
+              onResolveHitl={resolveHITL}
+              onQuery={send}
+            />
+          ))
+        )}
       </div>
 
       <div className="chat-input-wrap">
